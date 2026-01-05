@@ -33,6 +33,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
+  table-layout: fixed; /* 셀 크기 고정 */
 }
 
 .comparison-table th {
@@ -44,6 +45,12 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  width: 150px; /* 기본 열 너비 */
+  min-width: 100px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .comparison-table td {
@@ -51,6 +58,13 @@
   border: 1px solid #444;
   background-color: #1a1a1a;
   color: #fff;
+  width: 150px; /* 기본 열 너비 */
+  min-width: 100px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
 }
 
 .comparison-table .row-number {
@@ -95,8 +109,15 @@
 
 .comparison-table .clickable-cell:hover {
   background-color: rgba(255, 87, 34, 0.5) !important;
-  transform: scale(1.02);
   box-shadow: 0 2px 8px rgba(255, 87, 34, 0.4);
+}
+
+.cell-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
 }
 
 .reason-badge {
@@ -110,7 +131,23 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  overflow: hidden;
+  width: 100%;
+}
+
+.cell-with-diff > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+}
+
+.cell-with-diff .diff-indicator {
+  flex-shrink: 0;
+}
+
+.cell-with-diff .reason-badge {
+  flex-shrink: 0;
 }
 
 .old-value {

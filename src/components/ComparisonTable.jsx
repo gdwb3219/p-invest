@@ -73,23 +73,27 @@ function ComparisonTable({ table1, table2, table1Headers, table2Headers, compari
                       const diffInfo = getDiffInfo(rowIndex, header);
                       const cellClass = getCellClass(rowIndex, header);
                       const hasReason = getChangeReason(rowIndex, header);
+                      const cellValue = getCellValue(table1, rowIndex, header);
+                      const tooltipText = diffInfo 
+                        ? `클릭하여 변경 사유 입력\n변경 전: ${cellValue}\n변경 후: ${getCellValue(table2, rowIndex, header)}`
+                        : cellValue;
                       return (
                         <td 
                           key={header} 
                           className={`${cellClass} ${diffInfo ? 'clickable-cell' : ''}`}
                           onClick={() => handleCellClick(rowIndex, header)}
-                          title={diffInfo ? '클릭하여 변경 사유 입력' : ''}
+                          title={tooltipText}
                         >
                           {diffInfo ? (
                             <div className="cell-with-diff">
-                              <span className="old-value">{getCellValue(table1, rowIndex, header)}</span>
+                              <span className="old-value">{cellValue}</span>
                               <span className="diff-indicator">→</span>
                               {hasReason && (
                                 <span className="reason-badge" title={hasReason}>💬</span>
                               )}
                             </div>
                           ) : (
-                            getCellValue(table1, rowIndex, header)
+                            <span className="cell-text">{cellValue}</span>
                           )}
                         </td>
                       );
@@ -122,23 +126,27 @@ function ComparisonTable({ table1, table2, table1Headers, table2Headers, compari
                       const diffInfo = getDiffInfo(rowIndex, header);
                       const cellClass = getCellClass(rowIndex, header);
                       const hasReason = getChangeReason(rowIndex, header);
+                      const cellValue = getCellValue(table2, rowIndex, header);
+                      const tooltipText = diffInfo 
+                        ? `클릭하여 변경 사유 입력\n변경 전: ${getCellValue(table1, rowIndex, header)}\n변경 후: ${cellValue}`
+                        : cellValue;
                       return (
                         <td 
                           key={header} 
                           className={`${cellClass} ${diffInfo ? 'clickable-cell' : ''}`}
                           onClick={() => handleCellClick(rowIndex, header)}
-                          title={diffInfo ? '클릭하여 변경 사유 입력' : ''}
+                          title={tooltipText}
                         >
                           {diffInfo ? (
                             <div className="cell-with-diff">
                               <span className="diff-indicator">→</span>
-                              <span className="new-value">{getCellValue(table2, rowIndex, header)}</span>
+                              <span className="new-value">{cellValue}</span>
                               {hasReason && (
                                 <span className="reason-badge" title={hasReason}>💬</span>
                               )}
                             </div>
                           ) : (
-                            getCellValue(table2, rowIndex, header)
+                            <span className="cell-text">{cellValue}</span>
                           )}
                         </td>
                       );
