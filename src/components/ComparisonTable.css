@@ -1,0 +1,234 @@
+.comparison-table-container {
+  margin-top: 2rem;
+}
+
+.tables-wrapper-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.table-panel {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #333;
+}
+
+.table-panel h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #646cff;
+  text-align: center;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.comparison-table th {
+  background-color: #2a2a2a;
+  color: #646cff;
+  padding: 0.75rem;
+  text-align: left;
+  border: 1px solid #444;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.comparison-table td {
+  padding: 0.75rem;
+  border: 1px solid #444;
+  background-color: #1a1a1a;
+  color: #fff;
+}
+
+.comparison-table .row-number {
+  background-color: #2a2a2a;
+  color: #888;
+  font-weight: bold;
+  text-align: center;
+  width: 50px;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+
+.comparison-table .row-different {
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.comparison-table .row-different .row-number {
+  background-color: rgba(255, 193, 7, 0.2);
+}
+
+.comparison-table .cell-different {
+  background-color: rgba(255, 87, 34, 0.3) !important;
+  position: relative;
+}
+
+.comparison-table .cell-different::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid #ff5722;
+  pointer-events: none;
+}
+
+.comparison-table .clickable-cell {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.comparison-table .clickable-cell:hover {
+  background-color: rgba(255, 87, 34, 0.5) !important;
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.4);
+}
+
+.reason-badge {
+  display: inline-block;
+  margin-left: 0.25rem;
+  font-size: 0.9rem;
+  cursor: help;
+}
+
+.cell-with-diff {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.old-value {
+  color: #ff5722;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.new-value {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.diff-indicator {
+  color: #646cff;
+  font-weight: bold;
+}
+
+.diff-details {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid #333;
+  margin-top: 2rem;
+}
+
+.diff-details h3 {
+  margin-top: 0;
+  color: #646cff;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.diff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.diff-item {
+  background: #2a2a2a;
+  border-radius: 6px;
+  padding: 1rem;
+  border: 1px solid #444;
+}
+
+.diff-item-header {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #444;
+}
+
+.diff-item-header strong {
+  color: #646cff;
+  font-size: 1.1rem;
+}
+
+.diff-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.diff-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.5rem;
+  background: #1a1a1a;
+  border-radius: 4px;
+}
+
+.clickable-diff-field {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clickable-diff-field:hover {
+  background: #2a2a2a;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.3);
+}
+
+.diff-field-name {
+  color: #888;
+  font-weight: 600;
+  min-width: 100px;
+}
+
+.diff-old {
+  color: #ff5722;
+  text-decoration: line-through;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 87, 34, 0.1);
+  border-radius: 4px;
+}
+
+.diff-arrow {
+  color: #646cff;
+  font-weight: bold;
+}
+
+.diff-new {
+  color: #4caf50;
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 4px;
+}
+
+@media (max-width: 1200px) {
+  .comparison-table {
+    font-size: 0.8rem;
+  }
+  
+  .comparison-table th,
+  .comparison-table td {
+    padding: 0.5rem;
+  }
+}
