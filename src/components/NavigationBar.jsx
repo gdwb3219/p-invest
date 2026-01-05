@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { ROUTES, ROUTE_META } from '../constants/routes';
 import './NavigationBar.css';
 
 function NavigationBar() {
@@ -8,22 +9,17 @@ function NavigationBar() {
         <h2>P-Invest System</h2>
       </div>
       <ul className="nav-menu">
-        <li>
-          <NavLink 
-            to="/compare" 
-            className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
-          >
-            비교 페이지
-          </NavLink>
-        </li>
-        <li>
-          <NavLink 
-            to="/test" 
-            className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
-          >
-            테스트 탭
-          </NavLink>
-        </li>
+        {Object.entries(ROUTE_META).map(([path, meta]) => (
+          <li key={path}>
+            <NavLink 
+              to={path} 
+              className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+            >
+              <span className="nav-icon">{meta.icon}</span>
+              <span className="nav-label">{meta.label}</span>
+            </NavLink>
+          </li>
+        ))}
       </ul>
     </nav>
   );

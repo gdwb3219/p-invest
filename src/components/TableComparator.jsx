@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import ComparisonTable from './ComparisonTable';
 import { compareTables } from '../utils/tableComparison';
-import { fetchTableDataFromMongoDB } from '../data/mockData';
+import { fetchTableDataFromMongoDB } from '../services/tableService';
+import { useChangeReasons } from '../hooks/useChangeReasons';
 import './TableComparator.css';
 
 function TableComparator() {
@@ -11,7 +12,7 @@ function TableComparator() {
   const [table1Headers, setTable1Headers] = useState([]);
   const [table2Headers, setTable2Headers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [changeReasons, setChangeReasons] = useState({}); // { "rowIndex_column": "변경 사유" }
+  const { changeReasons, saveReason } = useChangeReasons();
 
   // 컴포넌트 마운트 시 MongoDB에서 데이터 로드
   useEffect(() => {
@@ -67,15 +68,10 @@ function TableComparator() {
     setTable1Headers([]);
     setTable2Headers([]);
     setComparisonResult(null);
-    setChangeReasons({});
   };
 
-  const handleChangeReasonSubmit = (rowIndex, column, reason) => {
-    const key = `${rowIndex}_${column}`;
-    setChangeReasons(prev => ({
-      ...prev,
-      [key]: reason
-    }));
+  const handleChangeReasonSubmit = async (rowIndex, column, reason) => {
+    await saveReason(rowIndex, column, reason);
   };
 
   return (

@@ -1,18 +1,2 @@
-.app {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-}
-
-.main-content {
-  flex: 1;
-  margin-left: 250px;
-  min-height: 100vh;
-  background-color: #242424;
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 200px;
-  }
-}
+/* App.css는 App 컴포넌트 전용 스타일이 필요한 경우에만 사용 */
+/* 레이아웃 관련 스타일은 MainLayout.css에 정의되어 있습니다 */
