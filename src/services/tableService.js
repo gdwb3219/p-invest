@@ -4,7 +4,7 @@
  */
 
 // Mock 데이터 (실제로는 서버에서 가져옴)
-import { mockTable1Data, mockTable2Data } from '../data/mockData';
+import { mockTable1Data, mockTable2Data } from "../data/mockData";
 
 /**
  * 테이블 데이터를 MongoDB에서 가져오는 함수
@@ -18,7 +18,7 @@ export const fetchTableDataFromMongoDB = async (tableNumber) => {
   //   throw new Error('데이터를 불러오는데 실패했습니다.');
   // }
   // return await response.json();
-  
+
   // Mock 데이터 반환 (네트워크 지연 시뮬레이션)
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -50,11 +50,11 @@ export const saveChangeReason = async (rowIndex, column, reason) => {
   // if (!response.ok) {
   //   throw new Error('변경 사유 저장에 실패했습니다.');
   // }
-  
+
   // Mock: 로컬 스토리지에 저장
   const key = `change_reason_${rowIndex}_${column}`;
   localStorage.setItem(key, reason);
-  
+
   return Promise.resolve();
 };
 
@@ -72,7 +72,7 @@ export const getChangeReason = async (rowIndex, column) => {
   // }
   // const data = await response.json();
   // return data.reason;
-  
+
   // Mock: 로컬 스토리지에서 가져오기
   const key = `change_reason_${rowIndex}_${column}`;
   return Promise.resolve(localStorage.getItem(key));
