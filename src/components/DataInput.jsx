@@ -175,3 +175,4 @@ function DataInput({ onDataChange, tableNumber }) {
 }
 
 export default DataInput;
+

@@ -10,10 +10,10 @@
 }
 
 .table-panel {
-  background: #1a1a1a;
+  background: #ffffff;
   border-radius: 8px;
   padding: 1rem;
-  border: 1px solid #333;
+  border: 1px solid #e0e0e0;
 }
 
 .table-panel h3 {
@@ -37,11 +37,11 @@
 }
 
 .comparison-table th {
-  background-color: #2a2a2a;
+  background-color: #f5f5f5;
   color: #646cff;
   padding: 0.75rem;
   text-align: left;
-  border: 1px solid #444;
+  border: 1px solid #d0d0d0;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -55,9 +55,9 @@
 
 .comparison-table td {
   padding: 0.75rem;
-  border: 1px solid #444;
-  background-color: #1a1a1a;
-  color: #fff;
+  border: 1px solid #d0d0d0;
+  background-color: #ffffff;
+  color: #213547;
   width: 150px; /* 기본 열 너비 */
   min-width: 100px;
   max-width: 200px;
@@ -68,8 +68,8 @@
 }
 
 .comparison-table .row-number {
-  background-color: #2a2a2a;
-  color: #888;
+  background-color: #f5f5f5;
+  color: #666;
   font-weight: bold;
   text-align: center;
   width: 50px;
@@ -167,10 +167,10 @@
 }
 
 .diff-details {
-  background: #1a1a1a;
+  background: #ffffff;
   border-radius: 8px;
   padding: 1.5rem;
-  border: 1px solid #333;
+  border: 1px solid #e0e0e0;
   margin-top: 2rem;
 }
 
@@ -188,16 +188,16 @@
 }
 
 .diff-item {
-  background: #2a2a2a;
+  background: #f9f9f9;
   border-radius: 6px;
   padding: 1rem;
-  border: 1px solid #444;
+  border: 1px solid #e0e0e0;
 }
 
 .diff-item-header {
   margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .diff-item-header strong {
@@ -217,7 +217,7 @@
   gap: 0.75rem;
   flex-wrap: wrap;
   padding: 0.5rem;
-  background: #1a1a1a;
+  background: #ffffff;
   border-radius: 4px;
 }
 
@@ -227,13 +227,13 @@
 }
 
 .clickable-diff-field:hover {
-  background: #2a2a2a;
+  background: #f5f5f5;
   transform: translateX(4px);
-  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.2);
 }
 
 .diff-field-name {
-  color: #888;
+  color: #666;
   font-weight: 600;
   min-width: 100px;
 }
@@ -269,3 +269,4 @@
     padding: 0.5rem;
   }
 }
+

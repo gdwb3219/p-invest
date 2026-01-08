@@ -216,3 +216,4 @@ function ComparisonTable({ table1, table2, table1Headers, table2Headers, compari
 }
 
 export default ComparisonTable;
+

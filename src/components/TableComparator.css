@@ -13,7 +13,7 @@
 
 .subtitle {
   text-align: center;
-  color: #888;
+  color: #666;
   margin-bottom: 2rem;
 }
 
@@ -71,12 +71,12 @@
 }
 
 .clear-btn {
-  background-color: #444;
-  color: white;
+  background-color: #e0e0e0;
+  color: #213547;
 }
 
 .clear-btn:hover {
-  background-color: #555;
+  background-color: #d0d0d0;
 }
 
 .result-section {
@@ -95,9 +95,9 @@
   gap: 2rem;
   margin-bottom: 2rem;
   padding: 1rem;
-  background: #1a1a1a;
+  background: #f9f9f9;
   border-radius: 8px;
-  border: 1px solid #333;
+  border: 1px solid #e0e0e0;
 }
 
 .summary-item {
@@ -108,7 +108,7 @@
 }
 
 .summary-label {
-  color: #888;
+  color: #666;
   font-size: 0.9rem;
 }
 
@@ -123,3 +123,4 @@
     grid-template-columns: 1fr;
   }
 }
+

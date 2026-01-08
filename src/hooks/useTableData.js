@@ -36,3 +36,4 @@ export function useTableData(tableNumber) {
     refetch: fetchData,
   };
 }
+

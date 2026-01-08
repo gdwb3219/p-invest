@@ -65,3 +65,4 @@ export function compareTables(table1, table2, headers1, headers2) {
     allHeaders
   };
 }
+
