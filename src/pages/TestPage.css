@@ -1,12 +1,12 @@
 .test-page {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1.5rem;
 }
 
 .test-page h1 {
   text-align: center;
-  color: #646cff;
+  color: #000555;
   margin-bottom: 1rem;
 }
 
@@ -19,7 +19,7 @@
 .test-content {
   background: #ffffff;
   border-radius: 8px;
-  padding: 2rem;
+  padding: 1.5rem;
   border: 1px solid #e0e0e0;
   width: 100%;
   box-sizing: border-box;
@@ -27,7 +27,7 @@
 }
 
 .refresh-btn {
-  background-color: #646cff;
+  background-color: #000555;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -65,12 +65,11 @@
 
 .tables-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin-top: 2rem;
+  gap: 1rem;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  font-size: 12px;
 }
 
 .table-section {
@@ -85,20 +84,19 @@
 }
 
 .table-section h2 {
-  color: #646cff;
+  color: #000555;
   margin-bottom: 1rem;
-  font-size: 1.3rem;
 }
 
 .table-wrapper {
   overflow-x: auto;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  border-radius: 6px;
+  border-radius: 3px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 100%;
-  max-height: 500px;
+  max-height: 350px;
   box-sizing: border-box;
 }
 
@@ -108,26 +106,29 @@
   border-collapse: separate;
   border-spacing: 0;
   background: white;
-  border-radius: 6px;
+  border-radius: 3px;
   overflow: hidden;
   table-layout: auto;
 }
 
 .data-table thead {
-  background-color: #646cff;
+  background-color: #fff;
   color: white;
   position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .data-table thead th {
   position: sticky;
   top: 0;
-  background-color: #646cff;
+  background-color: #000555;
   z-index: 10;
-  padding: 0.75rem;
+  padding: 0.2rem;
+  padding-left: 0.5rem;
   text-align: left;
-  font-weight: 600;
-  border-bottom: 2px solid #535bf2;
+  font-weight: 400;
   border-right: 1px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -136,7 +137,7 @@
 }
 
 .data-table td {
-  padding: 0.75rem;
+  padding: 0.2rem;
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -159,17 +160,18 @@
 
 /* 변경사항 요약 섹션 */
 .changes-section {
-  margin-top: 3rem;
+  margin-top: 1rem;
   background: #f9f9f9;
   border-radius: 8px;
   padding: 1.5rem;
   border: 1px solid #e0e0e0;
+  font-size: 12px;
 }
 
 .changes-section h2 {
-  color: #646cff;
+  color: #000555;
   margin-bottom: 1rem;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   text-align: center;
 }
 
@@ -177,7 +179,7 @@
   overflow-x: auto;
   overflow-y: auto;
   max-height: 400px;
-  border-radius: 6px;
+  border-radius: 3px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   background: white;
 }
@@ -190,22 +192,25 @@
 }
 
 .changes-table thead {
-  background-color: #646cff;
+  background-color: #000555;
   color: white;
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
+.changes-table thead:last-child {
+  border-right: none;
+}
+
 .changes-table th {
-  padding: 0.75rem;
+  padding: 0.2rem;
   text-align: left;
-  font-weight: 600;
-  border-bottom: 2px solid #535bf2;
+  font-weight: 500;
 }
 
 .changes-table td {
-  padding: 0.75rem;
+  padding: 0.3rem;
   border-bottom: 1px solid #e0e0e0;
 }
 

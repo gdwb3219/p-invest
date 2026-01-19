@@ -148,7 +148,7 @@ function TestPage() {
   return (
     <div className="page-container">
       <div className="test-page">
-        <h1>MongoDB 데이터 테이블</h1>
+        <h1>투자 데이터 비교 페이지</h1>
         <p>MongoDB에서 가져온 데이터를 테이블로 표시합니다.</p>
 
         <div className="test-content">
@@ -169,7 +169,7 @@ function TestPage() {
           {!loading && !error && (
             <div className="tables-container">
               <div className="table-section">
-                <h2>Data 1</h2>
+                <h2>기준 투자 리스트</h2>
                 {data1.length > 0 ? (
                   <div className="table-wrapper" ref={table1Ref}>
                     <table className="data-table">
@@ -206,7 +206,7 @@ function TestPage() {
               </div>
 
               <div className="table-section">
-                <h2>Data 2</h2>
+                <h2>신규 투자 리스트</h2>
                 {data2.length > 0 ? (
                   <div className="table-wrapper" ref={table2Ref}>
                     <table className="data-table">
