@@ -18,7 +18,7 @@ export const ROUTE_META = {
     icon: "📊",
   },
   [ROUTES.TEST]: {
-    label: "테스트 탭",
+    label: "투자 비교",
     icon: "🧪",
   },
 };
