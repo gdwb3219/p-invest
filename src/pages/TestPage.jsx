@@ -3,6 +3,15 @@ import axios from "axios";
 import RevSelector from "../components/rev-compare/RevSelector";
 import "./TestPage.css";
 
+// "투자0 (사업명)", "투자0 순번"을 항상 왼쪽 열로 두기 위한 헤더 정렬 (컴포넌트 외부에서 상수로 사용)
+const KEY_FIRST = ["투자0 (사업명)", "투자0 순번"];
+const getOrderedHeaders = (headers) => {
+  if (!headers || headers.length === 0) return headers || [];
+  const first = KEY_FIRST.filter((k) => headers.includes(k));
+  const rest = headers.filter((k) => !KEY_FIRST.includes(k));
+  return [...first, ...rest];
+};
+
 function TestPage() {
   const [data1, setData1] = useState([]);
   const [data2, setData2] = useState([]);
@@ -16,11 +25,11 @@ function TestPage() {
   const table2Ref = useRef(null);
   const isScrollingRef = useRef(false);
 
-  // Unique Key 생성 함수 (id + email 조합)
+  // "투자0 (사업명)" + "투자0 순번"을 unique key로 사용하여 비교 (삭제, 수정, 신규 판별)
   const getUniqueKey = (row) => {
-    const id = row.id !== undefined ? String(row.id) : '';
-    const email = row.email !== undefined ? String(row.email) : '';
-    return `${id}::${email}`;
+    const 사업명 = row["투자0 (사업명)"] !== undefined ? String(row["투자0 (사업명)"]) : "";
+    const 순번 = row["투자0 순번"] !== undefined ? String(row["투자0 순번"]) : "";
+    return `${사업명}::${순번}`;
   };
 
   // Unique Key 기준으로 테이블 비교
@@ -38,7 +47,8 @@ function TestPage() {
 
     const headers1 = Object.keys(data1[0]);
     const headers2 = Object.keys(data2[0]);
-    const allHeaders = [...new Set([...headers1, ...headers2])];
+    const allHeadersRaw = [...new Set([...headers1, ...headers2])];
+    const allHeaders = getOrderedHeaders(allHeadersRaw);
 
     // Unique Key를 키로 하는 Map 생성
     const map1 = new Map();
@@ -132,7 +142,7 @@ function TestPage() {
       }
     });
 
-    // 변경된 컬럼 추출
+    // 변경된 컬럼 추출 ("투자0 (사업명)", "투자0 순번"은 항상 표시하기 위해 포함 후 정렬)
     const changedColumnsSet = new Set();
     comparisonData.forEach((item) => {
       Object.keys(item.rowDiff).forEach((column) => {
@@ -141,11 +151,13 @@ function TestPage() {
         }
       });
     });
+    const withKeyColumns = new Set([...KEY_FIRST.filter((k) => allHeaders.includes(k)), ...changedColumnsSet]);
+    const changedColumnsOrdered = getOrderedHeaders(Array.from(withKeyColumns));
 
     return {
       comparisonData,
       rowTypeMap,
-      changedColumns: Array.from(changedColumnsSet),
+      changedColumns: changedColumnsOrdered,
       allHeaders,
     };
   }, [data1, data2]);
@@ -372,15 +384,15 @@ function TestPage() {
                     <table className="data-table">
                       <thead>
                         <tr>
-                          {headers1.map((header, index) => (
+                          {getOrderedHeaders(headers1).map((header, index) => (
                             <th key={index}>{header}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {data1.map((row, rowIndex) => (
-                          <tr key={rowIndex}>
-                            {headers1.map((header, colIndex) => (
+                          <tr key={`t1-${rowIndex}`}>
+                            {getOrderedHeaders(headers1).map((header, colIndex) => (
                               <td
                                 key={colIndex}
                                 className={
@@ -416,7 +428,7 @@ function TestPage() {
                       </thead>
                       <tbody>
                         {data2.map((row, rowIndex) => (
-                          <tr key={rowIndex}>
+                          <tr key={`t2-${rowIndex}`}>
                             {headers2.map((header, colIndex) => (
                               <td
                                 key={colIndex}

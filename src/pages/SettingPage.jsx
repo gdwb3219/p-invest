@@ -5,6 +5,7 @@ import "./SettingPage.css";
 function SettingPage() {
   const [revisions, setRevisions] = useState([]);
   const [selectedImportId, setSelectedImportId] = useState("");
+  const [selectedVersion, setSelectedVersion] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingRevisions, setLoadingRevisions] = useState(false);
   const [error, setError] = useState(null);
@@ -20,7 +21,9 @@ function SettingPage() {
     setLoadingRevisions(true);
     setError(null);
     try {
-      const response = await axios.get("http://127.0.0.1:8080/api/imports/rev-list/");
+      const response = await axios.get(
+        "http://127.0.0.1:8080/api/imports/rev-list/"
+      );
       const revisionsData = Array.isArray(response.data)
         ? response.data
         : response.data?.data || response.data?.results || [];
@@ -35,14 +38,14 @@ function SettingPage() {
   };
 
   const handleImportIdChange = (e) => {
-    setSelectedImportId(e.target.value);
+    setSelectedVersion(e.target.value);
     setConfirmDelete(false);
     setSuccess(null);
     setError(null);
   };
 
   const handleDelete = async () => {
-    if (!selectedImportId) {
+    if (!selectedVersion) {
       setError("삭제할 import_id를 선택해주세요.");
       return;
     }
@@ -60,10 +63,10 @@ function SettingPage() {
       // imports 콜렉션과 sap_his_data 콜렉션에서 삭제
       const [importsResponse, sapHisResponse] = await Promise.all([
         axios.delete(`http://127.0.0.1:8080/api/imports/delete/`, {
-          params: { import_id: selectedImportId },
+          params: { import_id: selectedVersion },
         }),
         axios.delete(`http://127.0.0.1:8080/api/sap-his-data/delete/`, {
-          params: { import_id: selectedImportId },
+          params: { import_id: selectedVersion },
         }),
       ]);
 
@@ -71,16 +74,19 @@ function SettingPage() {
       console.log("SAP HIS Data 삭제 응답:", sapHisResponse.data);
 
       setSuccess(
-        `import_id: ${selectedImportId}에 해당하는 데이터가 성공적으로 삭제되었습니다.`
+        `version: ${selectedVersion}에 해당하는 데이터가 성공적으로 삭제되었습니다.`
       );
-      setSelectedImportId("");
+      setSelectedVersion("");
       setConfirmDelete(false);
-      
+
       // 목록 새로고침
       fetchRevisions();
     } catch (err) {
       console.error("데이터 삭제 오류:", err);
-      const errorMessage = err.response?.data?.message || err.message || "데이터 삭제 중 오류가 발생했습니다.";
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "데이터 삭제 중 오류가 발생했습니다.";
       setError(`삭제 실패: ${errorMessage}`);
       setConfirmDelete(false);
     } finally {
@@ -95,20 +101,24 @@ function SettingPage() {
 
   // revision의 고유 식별자 추출
   const getRevisionId = (revision) => {
-    return revision.id || revision._id || revision.import_id || String(revision);
+    return (
+      revision.id || revision._id || revision.import_id || String(revision)
+    );
   };
 
   // revision의 표시 이름 추출
   const getRevisionDisplayName = (revision) => {
-    const name = revision.name || revision.revision_name || revision.revision || `Revision ${getRevisionId(revision)}`;
+    const name =
+      revision.name ||
+      revision.revision_name ||
+      revision.revision ||
+      `Revision ${getRevisionId(revision)}`;
     const importId = revision.import_id || revision.importId;
     return importId ? `${name} (import_id: ${importId})` : name;
   };
 
   // 선택된 revision 정보 가져오기
-  const selectedRevision = revisions.find(
-    (r) => (r.import_id || r.importId) === selectedImportId
-  );
+  const selectedRevision = revisions.find((r) => r.version === selectedVersion);
 
   return (
     <div className="page-container">
@@ -123,7 +133,7 @@ function SettingPage() {
               <label htmlFor="import-id-select">Import ID 선택:</label>
               <select
                 id="import-id-select"
-                value={selectedImportId}
+                value={selectedVersion}
                 onChange={handleImportIdChange}
                 className="import-select"
                 disabled={loadingRevisions || loading}
@@ -147,7 +157,7 @@ function SettingPage() {
                 <div className="info-grid">
                   <div className="info-item">
                     <span className="info-label">Import ID:</span>
-                    <span className="info-value">{selectedImportId}</span>
+                    <span className="info-value">{selectedVersion}</span>
                   </div>
                   <div className="info-item">
                     <span className="info-label">Revision Name:</span>
@@ -163,13 +173,15 @@ function SettingPage() {
             )}
 
             {loadingRevisions && (
-              <div className="loading-message">Revision 목록을 불러오는 중...</div>
+              <div className="loading-message">
+                Revision 목록을 불러오는 중...
+              </div>
             )}
 
             {error && <div className="error-message">{error}</div>}
             {success && <div className="success-message">{success}</div>}
 
-            {selectedImportId && (
+            {selectedVersion && (
               <div className="delete-section">
                 {!confirmDelete ? (
                   <button
@@ -186,7 +198,7 @@ function SettingPage() {
                         <strong>경고:</strong> 이 작업은 되돌릴 수 없습니다.
                       </p>
                       <p>
-                        import_id <strong>{selectedImportId}</strong>에 해당하는
+                        import_id <strong>{selectedVersion}</strong>에 해당하는
                         데이터를 imports 콜렉션과 sap_his_data 콜렉션에서
                         삭제하시겠습니까?
                       </p>
