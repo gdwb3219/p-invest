@@ -17,14 +17,16 @@ function RevSelector({
 
   // revision의 고유 식별자 추출 (id, _id 등 다양한 형태 지원)
   const getRevisionId = (revision) => {
-    return revision.id || revision._id || revision.import_id || String(revision);
+    return (
+      revision.id || revision._id || revision.import_id || String(revision)
+    );
   };
 
   // revision의 표시 이름 추출
   const getRevisionDisplayName = (revision) => {
-    const name = revision.name || revision.revision_name || revision.revision || `Revision ${getRevisionId(revision)}`;
+    const rev_id = revision.rev_id || `Revision ${getRevisionId(revision)}`;
     const importId = revision.import_id || revision.importId;
-    return importId ? `${name} (import_id: ${importId})` : name;
+    return importId ? `${rev_id} ` : importId;
   };
 
   return (

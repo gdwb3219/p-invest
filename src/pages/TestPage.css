@@ -118,17 +118,17 @@
   border-spacing: 0;
   background: white;
   border-radius: 3px;
-  overflow: hidden;
   table-layout: auto;
 }
 
+/* 테이블1, 테이블2: 세로 스크롤 시 헤더 행 고정 (sticky) - overflow 제거로 .table-wrapper 기준 sticky 동작 */
 .data-table thead {
-  background-color: #fff;
-  color: white;
-  position: relative;
   position: sticky;
   top: 0;
   z-index: 10;
+  background-color: #000555;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .data-table thead th {
@@ -145,6 +145,29 @@
 
 .data-table thead th:last-child {
   border-right: none;
+}
+
+/* 행 번호 컬럼: 가로 스크롤 시 왼쪽 고정 (테이블1, 테이블2) */
+.data-table .row-num-column {
+  position: sticky;
+  left: 0;
+  min-width: 2.5rem;
+  width: 2.5rem;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.08);
+}
+.data-table thead th.row-num-column {
+  background-color: #000555;
+  z-index: 11;
+  color: white;
+}
+.data-table tbody td.row-num-column {
+  background-color: #fff;
+  z-index: 4;
+}
+.data-table tbody tr:hover td.row-num-column {
+  background-color: #f5f5f5;
 }
 
 .data-table td {
@@ -218,6 +241,47 @@
   padding: 0.2rem;
   text-align: left;
   font-weight: 500;
+}
+
+/* 행 번호 컬럼: 가로 스크롤 시 왼쪽 고정 (비교 결과 테이블) */
+.changes-table .row-num-column {
+  position: sticky;
+  left: 0;
+  min-width: 2.5rem;
+  width: 2.5rem;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.08);
+}
+.changes-table thead th.row-num-column {
+  background-color: #000555;
+  color: white;
+  z-index: 11;
+}
+.changes-table tbody td.row-num-column {
+  background-color: white;
+  z-index: 4;
+}
+.changes-table tbody tr:hover td.row-num-column {
+  background-color: #f5f5f5;
+}
+.changes-table tbody tr.type-신규 td.row-num-column {
+  background-color: rgba(76, 175, 80, 0.05);
+}
+.changes-table tbody tr.type-신규:hover td.row-num-column {
+  background-color: rgba(76, 175, 80, 0.1);
+}
+.changes-table tbody tr.type-수정 td.row-num-column {
+  background-color: rgba(255, 152, 0, 0.05);
+}
+.changes-table tbody tr.type-수정:hover td.row-num-column {
+  background-color: rgba(255, 152, 0, 0.1);
+}
+.changes-table tbody tr.type-삭제 td.row-num-column {
+  background-color: rgba(244, 67, 54, 0.05);
+}
+.changes-table tbody tr.type-삭제:hover td.row-num-column {
+  background-color: rgba(244, 67, 54, 0.1);
 }
 
 .changes-table td {

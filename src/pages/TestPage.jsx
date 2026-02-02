@@ -3,8 +3,8 @@ import axios from "axios";
 import RevSelector from "../components/rev-compare/RevSelector";
 import "./TestPage.css";
 
-// "투자0 (사업명)", "투자0 순번"을 항상 왼쪽 열로 두기 위한 헤더 정렬 (컴포넌트 외부에서 상수로 사용)
-const KEY_FIRST = ["투자0 (사업명)", "투자0 순번"];
+// "BizName", "BizNum"을 항상 왼쪽 열로 두기 위한 헤더 정렬 (컴포넌트 외부에서 상수로 사용)
+const KEY_FIRST = ["BizName", "BizNum"];
 const getOrderedHeaders = (headers) => {
   if (!headers || headers.length === 0) return headers || [];
   const first = KEY_FIRST.filter((k) => headers.includes(k));
@@ -25,10 +25,10 @@ function TestPage() {
   const table2Ref = useRef(null);
   const isScrollingRef = useRef(false);
 
-  // "투자0 (사업명)" + "투자0 순번"을 unique key로 사용하여 비교 (삭제, 수정, 신규 판별)
+  // "BizName" + "BizNum"을 unique key로 사용하여 비교 (삭제, 수정, 신규 판별)
   const getUniqueKey = (row) => {
-    const 사업명 = row["투자0 (사업명)"] !== undefined ? String(row["투자0 (사업명)"]) : "";
-    const 순번 = row["투자0 순번"] !== undefined ? String(row["투자0 순번"]) : "";
+    const 사업명 = row["BizName"] !== undefined ? String(row["BizName"]) : "";
+    const 순번 = row["BizNum"] !== undefined ? String(row["BizNum"]) : "";
     return `${사업명}::${순번}`;
   };
 
@@ -74,31 +74,31 @@ function TestPage() {
       const row1 = map1.get(uniqueKey);
       const row2 = map2.get(uniqueKey);
 
-      let type = '';
+      let type = "";
       let rowData = {};
       let rowDiff = {};
 
       if (!row1 && row2) {
         // 신규: data1에 없고 data2에만 있음
-        type = '신규';
+        type = "신규";
         rowData = { ...row2 };
         // 모든 컬럼을 변경된 것으로 표시
         allHeaders.forEach((header) => {
           rowDiff[header] = {
-            oldValue: '',
-            newValue: row2[header] !== undefined ? String(row2[header]) : '',
+            oldValue: "",
+            newValue: row2[header] !== undefined ? String(row2[header]) : "",
             changed: true,
           };
         });
       } else if (row1 && !row2) {
         // 삭제: data1에 있고 data2에 없음
-        type = '삭제';
+        type = "삭제";
         rowData = { ...row1 };
         // 모든 컬럼을 삭제된 것으로 표시
         allHeaders.forEach((header) => {
           rowDiff[header] = {
-            oldValue: row1[header] !== undefined ? String(row1[header]) : '',
-            newValue: '',
+            oldValue: row1[header] !== undefined ? String(row1[header]) : "",
+            newValue: "",
             changed: true,
           };
         });
@@ -108,8 +108,8 @@ function TestPage() {
         let hasChange = false;
 
         allHeaders.forEach((header) => {
-          const value1 = row1[header] !== undefined ? String(row1[header]) : '';
-          const value2 = row2[header] !== undefined ? String(row2[header]) : '';
+          const value1 = row1[header] !== undefined ? String(row1[header]) : "";
+          const value2 = row2[header] !== undefined ? String(row2[header]) : "";
 
           if (value1 !== value2) {
             rowDiff[header] = {
@@ -127,10 +127,10 @@ function TestPage() {
           }
         });
 
-        type = hasChange ? '수정' : '동일';
+        type = hasChange ? "수정" : "동일";
       }
 
-      if (type !== '동일') {
+      if (type !== "동일") {
         // 동일한 경우는 제외하고 비교 결과에 추가
         comparisonData.push({
           uniqueKey,
@@ -142,7 +142,7 @@ function TestPage() {
       }
     });
 
-    // 변경된 컬럼 추출 ("투자0 (사업명)", "투자0 순번"은 항상 표시하기 위해 포함 후 정렬)
+    // 변경된 컬럼 추출 ("BizName", "BizNum"은 항상 표시하기 위해 포함 후 정렬)
     const changedColumnsSet = new Set();
     comparisonData.forEach((item) => {
       Object.keys(item.rowDiff).forEach((column) => {
@@ -151,7 +151,10 @@ function TestPage() {
         }
       });
     });
-    const withKeyColumns = new Set([...KEY_FIRST.filter((k) => allHeaders.includes(k)), ...changedColumnsSet]);
+    const withKeyColumns = new Set([
+      ...KEY_FIRST.filter((k) => allHeaders.includes(k)),
+      ...changedColumnsSet,
+    ]);
     const changedColumnsOrdered = getOrderedHeaders(Array.from(withKeyColumns));
 
     return {
@@ -170,7 +173,9 @@ function TestPage() {
   const fetchRevisions = async () => {
     setLoadingRevisions(true);
     try {
-      const response = await axios.get("http://127.0.0.1:8080/api/imports/rev-list/");
+      const response = await axios.get(
+        "http://127.0.0.1:8080/api/imports/rev-list/"
+      );
       const revisionsData = Array.isArray(response.data)
         ? response.data
         : response.data?.data || response.data?.results || [];
@@ -235,18 +240,22 @@ function TestPage() {
       setError("두 개의 revision을 모두 선택해주세요.");
       return;
     }
-    console.log("조회 버튼 동작")
+    console.log("조회 버튼 동작");
     setLoading(true);
     setError(null);
     try {
       // 선택된 revision에서 import_id 추출
       // 다양한 형태의 ID 필드 지원 (id, _id, import_id 등)
       const getRevisionId = (r) => r.id || r._id || r.import_id || String(r);
-      const revision1 = revisions.find((r) => getRevisionId(r) === selectedRevision1);
-      const revision2 = revisions.find((r) => getRevisionId(r) === selectedRevision2);
+      const revision1 = revisions.find(
+        (r) => getRevisionId(r) === selectedRevision1
+      );
+      const revision2 = revisions.find(
+        (r) => getRevisionId(r) === selectedRevision2
+      );
 
       console.log("revision1:", revision1);
-      console.log("revision2:", revision2); 
+      console.log("revision2:", revision2);
       console.log("selectedRevision1:", selectedRevision1);
       console.log("selectedRevision2:", selectedRevision2);
 
@@ -269,8 +278,12 @@ function TestPage() {
       console.log("importId1:", importId1);
       console.log("importId2:", importId2);
       const [response1, response2] = await Promise.all([
-        axios.get(`http://127.0.0.1:8080/api/imports/rev-data`, {params: {import_id: importId1}}),
-        axios.get(`http://127.0.0.1:8080/api/imports/rev-data`, {params: {import_id: importId2}}),
+        axios.get(`http://127.0.0.1:8080/api/imports/rev-data`, {
+          params: { import_id: importId1 },
+        }),
+        axios.get(`http://127.0.0.1:8080/api/imports/rev-data`, {
+          params: { import_id: importId2 },
+        }),
       ]);
 
       console.log("Response 1:", response1.data);
@@ -299,7 +312,10 @@ function TestPage() {
       setData2(data2Array);
     } catch (err) {
       console.error("데이터 가져오기 오류:", err);
-      setError("데이터를 불러오는 중 오류가 발생했습니다: " + (err.response?.data?.message || err.message));
+      setError(
+        "데이터를 불러오는 중 오류가 발생했습니다: " +
+          (err.response?.data?.message || err.message)
+      );
     } finally {
       setLoading(false);
     }
@@ -328,7 +344,8 @@ function TestPage() {
   };
 
   const changedColumns = comparisonResult?.changedColumns || [];
-  const hasChanges = comparisonResult && comparisonResult.comparisonData.length > 0;
+  const hasChanges =
+    comparisonResult && comparisonResult.comparisonData.length > 0;
 
   return (
     <div className="page-container">
@@ -359,14 +376,21 @@ function TestPage() {
             <button
               onClick={fetchData}
               className="query-btn"
-              disabled={loading || loadingRevisions || !selectedRevision1 || !selectedRevision2}
+              disabled={
+                loading ||
+                loadingRevisions ||
+                !selectedRevision1 ||
+                !selectedRevision2
+              }
             >
               {loading ? "로딩 중..." : "조회"}
             </button>
           </div>
 
           {loadingRevisions && (
-            <div className="loading-message">Revision 목록을 불러오는 중...</div>
+            <div className="loading-message">
+              Revision 목록을 불러오는 중...
+            </div>
           )}
 
           {error && <div className="error-message">{error}</div>}
@@ -384,6 +408,7 @@ function TestPage() {
                     <table className="data-table">
                       <thead>
                         <tr>
+                          <th className="row-num-column">#</th>
                           {getOrderedHeaders(headers1).map((header, index) => (
                             <th key={index}>{header}</th>
                           ))}
@@ -392,18 +417,23 @@ function TestPage() {
                       <tbody>
                         {data1.map((row, rowIndex) => (
                           <tr key={`t1-${rowIndex}`}>
-                            {getOrderedHeaders(headers1).map((header, colIndex) => (
-                              <td
-                                key={colIndex}
-                                className={
-                                  isCellDifferent(rowIndex, header)
-                                    ? "cell-different"
-                                    : ""
-                                }
-                              >
-                                {row[header]}
-                              </td>
-                            ))}
+                            <td className="row-num-column">
+                              {rowIndex + 1}
+                            </td>
+                            {getOrderedHeaders(headers1).map(
+                              (header, colIndex) => (
+                                <td
+                                  key={colIndex}
+                                  className={
+                                    isCellDifferent(rowIndex, header)
+                                      ? "cell-different"
+                                      : ""
+                                  }
+                                >
+                                  {row[header]}
+                                </td>
+                              )
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -421,7 +451,8 @@ function TestPage() {
                     <table className="data-table">
                       <thead>
                         <tr>
-                          {headers2.map((header, index) => (
+                          <th className="row-num-column">#</th>
+                          {getOrderedHeaders(headers2).map((header, index) => (
                             <th key={index}>{header}</th>
                           ))}
                         </tr>
@@ -429,18 +460,23 @@ function TestPage() {
                       <tbody>
                         {data2.map((row, rowIndex) => (
                           <tr key={`t2-${rowIndex}`}>
-                            {headers2.map((header, colIndex) => (
-                              <td
-                                key={colIndex}
-                                className={
-                                  isCellDifferent(rowIndex, header)
-                                    ? "cell-different"
-                                    : ""
-                                }
-                              >
-                                {row[header]}
-                              </td>
-                            ))}
+                            <td className="row-num-column">
+                              {rowIndex + 1}
+                            </td>
+                            {getOrderedHeaders(headers2).map(
+                              (header, colIndex) => (
+                                <td
+                                  key={colIndex}
+                                  className={
+                                    isCellDifferent(rowIndex, header)
+                                      ? "cell-different"
+                                      : ""
+                                  }
+                                >
+                                  {row[header]}
+                                </td>
+                              )
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -462,6 +498,7 @@ function TestPage() {
                   <table className="changes-table">
                     <thead>
                       <tr>
+                        <th className="row-num-column">#</th>
                         {changedColumns.map((header, index) => (
                           <th key={index}>{header}</th>
                         ))}
@@ -469,11 +506,14 @@ function TestPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {comparisonResult.comparisonData.map((item) => {
+                      {comparisonResult.comparisonData.map((item, rowIndex) => {
                         const { rowData, rowDiff, type } = item;
 
                         return (
                           <tr key={item.uniqueKey} className={`type-${type}`}>
+                            <td className="row-num-column">
+                              {rowIndex + 1}
+                            </td>
                             {changedColumns.map((column, colIndex) => {
                               const diff = rowDiff[column];
                               const hasChange = diff && diff.changed;

@@ -1,12 +1,13 @@
 import { NavLink } from "react-router-dom";
 import { ROUTES, ROUTE_META } from "../constants/routes";
-import { FaTableColumns, FaFlask, FaSliders } from "react-icons/fa6";
+import { FaTableColumns, FaFlask, FaChartLine, FaSliders } from "react-icons/fa6";
 import "./NavigationBar.css";
 
 function NavigationBar() {
   const ICONS = {
     [ROUTES.COMPARE]: <FaTableColumns />,
     [ROUTES.TEST]: <FaFlask />,
+    [ROUTES.DASHBOARD]: <FaChartLine />,
     [ROUTES.SETTINGS]: <FaSliders />,
   };
 

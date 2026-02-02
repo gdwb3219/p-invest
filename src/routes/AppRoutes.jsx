@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import ComparePage from "../pages/ComparePage";
 import TestPage from "../pages/TestPage";
+import InvestDashboard from "../pages/InvestDashboard";
 import SettingPage from "../pages/SettingPage";
 
 function AppRoutes() {
@@ -13,6 +14,7 @@ function AppRoutes() {
       />
       <Route path={ROUTES.COMPARE} element={<ComparePage />} />
       <Route path={ROUTES.TEST} element={<TestPage />} />
+      <Route path={ROUTES.DASHBOARD} element={<InvestDashboard />} />
       <Route path={ROUTES.SETTINGS} element={<SettingPage />} />
     </Routes>
   );
