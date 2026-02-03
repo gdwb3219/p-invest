@@ -57,8 +57,7 @@ function InvestDashboard() {
     setError(null);
     try {
       const rev = revisions.find(
-        (r) =>
-          (r.id ?? r._id ?? r.import_id ?? String(r)) === selectedRevId
+        (r) => (r.id ?? r._id ?? r.import_id ?? String(r)) === selectedRevId
       );
       const importId = rev?.import_id ?? rev?.importId;
       if (!importId) {
@@ -85,25 +84,43 @@ function InvestDashboard() {
   const genderKey = useMemo(() => {
     if (!rawData.length || !rawData[0]) return null;
     const keys = Object.keys(rawData[0]);
-    return keys.find(
-      (k) => k.toLowerCase() === "gender" || k.toLowerCase().includes("gender")
-    ) ?? null;
+    return (
+      keys.find(
+        (k) =>
+          k.toLowerCase() === "투자명" || k.toLowerCase().includes("투자명")
+      ) ?? null
+    );
   }, [rawData]);
 
   const rateKey = useMemo(() => {
     if (!rawData.length || !rawData[0]) return null;
+
     const keys = Object.keys(rawData[0]);
-    return keys.find(
-      (k) => k.toLowerCase() === "rate" || k.toLowerCase().includes("rate")
-    ) ?? null;
+
+    // 디버깅용: 실제 어떤 키들이 들어있는지 콘솔에서 확인해보세요.
+    // console.log("현재 데이터의 키 목록:", keys);
+
+    return (
+      keys.find((k) => {
+        // 1. 양쪽 공백 제거
+        const cleanKey = k.trim();
+        // 2. 비교 대상 문자열도 공백 없이 검색
+        return cleanKey.includes("예산(억원)");
+      }) ?? null
+    );
   }, [rawData]);
+
+  console.log("rawData", rawData);
+  console.log("genderKey", genderKey);
+  console.log("rateKey", rateKey);
 
   const genderChartData = useMemo(() => {
     if (!genderKey || !rawData.length) return [];
     const countBy = {};
     rawData.forEach((row) => {
       const v = row[genderKey];
-      const label = v != null && String(v).trim() !== "" ? String(v).trim() : "(비어있음)";
+      const label =
+        v != null && String(v).trim() !== "" ? String(v).trim() : "(비어있음)";
       countBy[label] = (countBy[label] ?? 0) + 1;
     });
     return Object.entries(countBy).map(([name, value]) => ({ name, value }));
@@ -114,7 +131,8 @@ function InvestDashboard() {
     const countBy = {};
     rawData.forEach((row) => {
       const v = row[rateKey];
-      const label = v != null && String(v).trim() !== "" ? String(v).trim() : "(비어있음)";
+      const label =
+        v != null && String(v).trim() !== "" ? String(v).trim() : "(비어있음)";
       countBy[label] = (countBy[label] ?? 0) + 1;
     });
     return Object.entries(countBy)
@@ -123,13 +141,15 @@ function InvestDashboard() {
       .slice(0, 15);
   }, [rawData, rateKey]);
 
+  console.log("rateChartData", rateChartData);
+
   const hasCharts = genderChartData.length > 0 || rateChartData.length > 0;
 
   return (
     <div className="dashboard-page">
       <header className="dashboard-header">
         <h1>투자 대시보드</h1>
-        <p>Revision 데이터의 gender·rate 기준 차트를 확인합니다.</p>
+        <p>Revision 데이터의 투자명· 예산(억원) 기준 차트를 확인합니다.</p>
       </header>
 
       <section className="dashboard-controls">
@@ -159,7 +179,7 @@ function InvestDashboard() {
 
       {!loadingData && rawData.length > 0 && !hasCharts && (
         <div className="dashboard-message dashboard-warning">
-          이 데이터에는 gender 또는 rate 컬럼이 없습니다.
+          이 데이터에는 투자명 또는 예산(억원) 컬럼이 없습니다.
         </div>
       )}
 
@@ -167,7 +187,7 @@ function InvestDashboard() {
         <div className="dashboard-charts">
           {genderChartData.length > 0 && (
             <div className="chart-card">
-              <h2>Gender 분포</h2>
+              <h2>투자명 분포</h2>
               <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
                   <Pie
@@ -195,7 +215,7 @@ function InvestDashboard() {
 
           {rateChartData.length > 0 && (
             <div className="chart-card chart-card-wide">
-              <h2>Rate 분포</h2>
+              <h2> 예산(억원) 분포</h2>
               <ResponsiveContainer width="100%" height={320}>
                 <BarChart
                   data={rateChartData}

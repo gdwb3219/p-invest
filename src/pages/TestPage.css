@@ -1,3 +1,14 @@
+/* TestPage 마운트 시 body에 .test-page-scroll-snap 적용 → 구간별 스크롤 멈춤 */
+body.test-page-scroll-snap {
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+
+.test-page .scroll-snap-section {
+  scroll-snap-align: end;
+  scroll-snap-stop: always;
+}
+
 .test-page {
   max-width: 1400px;
   margin: 0 auto;
@@ -111,6 +122,14 @@
   box-sizing: border-box;
 }
 
+/* 테이블 1/2: 윈도우 기본 파란 드래그 선택 비활성화 */
+.table-wrapper .data-table {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
 .data-table {
   width: 100%;
   min-width: 600px;
@@ -181,6 +200,14 @@
 
 .data-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* 드래그로 선택한 셀 하이라이트 (테이블 1/2) */
+.data-table .cell-selected {
+  background-color: rgba(99, 102, 241, 0.35) !important;
+}
+.data-table .cell-selected.cell-different {
+  background-color: rgba(99, 102, 241, 0.5) !important;
 }
 
 /* 차이가 있는 셀 하이라이트 */
