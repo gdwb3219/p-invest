@@ -23,8 +23,10 @@ function InvestDashboard() {
   const [revisions, setRevisions] = useState([]);
   const [selectedRevId, setSelectedRevId] = useState("");
   const [rawData, setRawData] = useState([]);
+  const [dashData, setDashData] = useState([]);
   const [loadingRevisions, setLoadingRevisions] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
+  const [loadingDash, setLoadingDash] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -110,9 +112,6 @@ function InvestDashboard() {
     );
   }, [rawData]);
 
-  console.log("rawData", rawData);
-  console.log("genderKey", genderKey);
-  console.log("rateKey", rateKey);
 
   const genderChartData = useMemo(() => {
     if (!genderKey || !rawData.length) return [];
@@ -141,9 +140,41 @@ function InvestDashboard() {
       .slice(0, 15);
   }, [rawData, rateKey]);
 
-  console.log("rateChartData", rateChartData);
 
   const hasCharts = genderChartData.length > 0 || rateChartData.length > 0;
+
+  const handleDash = async () => {
+    setLoadingDash(true);
+    setError(null);
+    try {
+      const res = await axios.get(`${API_BASE}/api/sap-his-data/dash`);
+      console.log("DashRes", res.data)
+      setDashData(res.data.chartData);
+      console.log("DashData", res.data.chartData)
+    } catch (err) {
+      console.error("Dash 데이터 조회 실패:", err);
+      setError("대시 차트 데이터를 불러올 수 없습니다.");
+      setDashData([]);
+    } finally {
+      setLoadingDash(false);
+    }
+  };
+
+  const dashBarDataKeys = useMemo(() => {
+    if (!dashData.length || !dashData[0]) return { nameKey: "name", valueKey: "value" };
+    const keys = Object.keys(dashData[0]);
+    const nameKey =
+      keys.find((k) => k.toLowerCase() === "name" || k === "name") ?? keys[0];
+    const valueKey =
+      keys.find(
+        (k) =>
+          k !== nameKey &&
+          (typeof dashData[0][k] === "number" ||
+            k.toLowerCase().includes("value") ||
+            k.toLowerCase().includes("count"))
+      ) ?? keys[1] ?? "value";
+    return { nameKey, valueKey };
+  }, [dashData]);
 
   return (
     <div className="dashboard-page">
@@ -170,12 +201,23 @@ function InvestDashboard() {
         >
           {loadingData ? "로딩 중..." : "데이터 조회"}
         </button>
+        <button
+          type="button"
+          className="dashboard-fetch-btn"
+          onClick={handleDash}
+          disabled={loadingDash}
+        >
+          {loadingDash ? "대시 로딩 중..." : "대시 차트 조회"}
+        </button>
       </section>
 
       {loadingRevisions && (
         <div className="dashboard-message">Revision 목록을 불러오는 중...</div>
       )}
       {error && <div className="dashboard-error">{error}</div>}
+      {loadingDash && (
+        <div className="dashboard-message">대시 차트 데이터를 불러오는 중...</div>
+      )}
 
       {!loadingData && rawData.length > 0 && !hasCharts && (
         <div className="dashboard-message dashboard-warning">
@@ -242,6 +284,39 @@ function InvestDashboard() {
               </ResponsiveContainer>
             </div>
           )}
+        </div>
+      )}
+
+      <span>대시 데이터</span>
+      {!loadingDash && dashData.length > 0 && (
+        <div className="dashboard-charts">
+          <div className="chart-card chart-card-wide">
+            <h2>SAP 이력 대시 (Bar)</h2>
+            <ResponsiveContainer width="100%" height={360}>
+              <BarChart
+                data={dashData}
+                margin={{ top: 16, right: 24, left: 16, bottom: 60 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis
+                  dataKey={dashBarDataKeys.nameKey}
+                  tick={{ fontSize: 12 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                />
+                <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                <Tooltip />
+                <Legend />
+                <Bar
+                  dataKey={dashBarDataKeys.valueKey}
+                  name={dashBarDataKeys.valueKey}
+                  fill="#6366f1"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       )}
     </div>
