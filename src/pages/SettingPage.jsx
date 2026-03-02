@@ -22,7 +22,7 @@ function SettingPage() {
     setError(null);
     try {
       const response = await axios.get(
-        "http://127.0.0.1:8080/api/imports/rev-list/"
+        "http://127.0.0.1:8080/api/imports/rev-list/",
       );
       const revisionsData = Array.isArray(response.data)
         ? response.data
@@ -74,7 +74,7 @@ function SettingPage() {
       console.log("SAP HIS Data 삭제 응답:", sapHisResponse.data);
 
       setSuccess(
-        `version: ${selectedVersion}에 해당하는 데이터가 성공적으로 삭제되었습니다.`
+        `version: ${selectedVersion}에 해당하는 데이터가 성공적으로 삭제되었습니다.`,
       );
       setSelectedVersion("");
       setConfirmDelete(false);
@@ -119,6 +119,14 @@ function SettingPage() {
 
   // 선택된 revision 정보 가져오기
   const selectedRevision = revisions.find((r) => r.version === selectedVersion);
+
+  // Test Area
+  const handleTest = async () => {
+    const response = await axios.get(
+      "http://127.0.0.1:8080/api/sap-his-data/test",
+    );
+    console.log(response.data, "TEST Data");
+  };
 
   return (
     <div className="page-container">
@@ -225,6 +233,7 @@ function SettingPage() {
             )}
           </div>
         </div>
+        <button onClick={handleTest}>Hi</button>
       </div>
     </div>
   );

@@ -12,15 +12,25 @@ const getOrderedHeaders = (headers) => {
   return [...first, ...rest];
 };
 
+// 탭별 초기 데이터
+const getInitialTabData = () => ({
+  data1: [],
+  data2: [],
+  selectedRevision1: "",
+  selectedRevision2: "",
+  loading: false,
+  error: null,
+});
+
+let nextTabId = 1;
 function TestPage() {
-  const [data1, setData1] = useState([]);
-  const [data2, setData2] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [tabs, setTabs] = useState([{ id: 1, name: "비교 1" }]);
+  const [activeTabId, setActiveTabId] = useState(1);
+  const [tabData, setTabData] = useState(() => ({ 1: getInitialTabData() }));
+
   const [revisions, setRevisions] = useState([]);
-  const [selectedRevision1, setSelectedRevision1] = useState("");
-  const [selectedRevision2, setSelectedRevision2] = useState("");
   const [loadingRevisions, setLoadingRevisions] = useState(false);
+  const [revisionListError, setRevisionListError] = useState(null);
   const table1Ref = useRef(null);
   const table2Ref = useRef(null);
   const tablesContainerRef = useRef(null);
@@ -28,6 +38,15 @@ function TestPage() {
   /** 드래그 선택: { tableId: 1|2, startRow, startCol, endRow, endCol } */
   const [selection, setSelection] = useState(null);
   const selectionStartRef = useRef(null);
+
+  // 현재 탭 데이터 (계산)
+  const currentTabData = tabData[activeTabId] || getInitialTabData();
+  const data1 = currentTabData.data1;
+  const data2 = currentTabData.data2;
+  const loading = currentTabData.loading;
+  const error = currentTabData.error;
+  const selectedRevision1 = currentTabData.selectedRevision1;
+  const selectedRevision2 = currentTabData.selectedRevision2;
 
   // "BizName" + "BizNum"을 unique key로 사용하여 비교 (삭제, 수정, 신규 판별)
   const getUniqueKey = (row) => {
@@ -185,23 +204,61 @@ function TestPage() {
         : response.data?.data || response.data?.results || [];
       console.log("Revisions Data:", revisionsData);
       setRevisions(revisionsData);
+      setRevisionListError(null);
     } catch (err) {
       console.error("Revision 목록 가져오기 오류:", err);
-      setError("Revision 목록을 불러오는 중 오류가 발생했습니다.");
+      setRevisionListError("Revision 목록을 불러오는 중 오류가 발생했습니다.");
     } finally {
       setLoadingRevisions(false);
     }
   };
 
+  const updateCurrentTabData = useCallback((updates) => {
+    setTabData((prev) => ({
+      ...prev,
+      [activeTabId]: {
+        ...(prev[activeTabId] || getInitialTabData()),
+        ...updates,
+      },
+    }));
+  }, [activeTabId]);
+
   const handleRevision1Change = (value) => {
     console.log("selectedRevision1 변경:", value);
-    setSelectedRevision1(value);
+    updateCurrentTabData({ selectedRevision1: value });
   };
 
   const handleRevision2Change = (value) => {
     console.log("selectedRevision2 변경:", value);
-    setSelectedRevision2(value);
+    updateCurrentTabData({ selectedRevision2: value });
   };
+
+  const addTab = () => {
+    nextTabId += 1;
+    const newTab = { id: nextTabId, name: `비교 ${nextTabId}` };
+    setTabs((prev) => [...prev, newTab]);
+    setTabData((prev) => ({ ...prev, [nextTabId]: getInitialTabData() }));
+    setActiveTabId(nextTabId);
+  };
+
+  const removeTab = (tabId, e) => {
+    e.stopPropagation();
+    const index = tabs.findIndex((t) => t.id === tabId);
+    if (index === -1 || tabs.length <= 1) return;
+    const remaining = tabs.filter((t) => t.id !== tabId);
+    setTabs(() => remaining);
+    setTabData((prev) => {
+      const next = { ...prev };
+      delete next[tabId];
+      return next;
+    });
+    if (activeTabId === tabId && remaining.length > 0) {
+      const nextIndex = Math.min(index, remaining.length - 1);
+      setActiveTabId(remaining[nextIndex].id);
+    }
+  };
+
+  const setActiveTab = (tabId) => setActiveTabId(tabId);
 
   // TestPage에서만 스크롤 스냅 적용 (구간별로 스크롤 멈춤)
   useEffect(() => {
@@ -247,12 +304,12 @@ function TestPage() {
 
   const fetchData = async () => {
     if (!selectedRevision1 || !selectedRevision2) {
-      setError("두 개의 revision을 모두 선택해주세요.");
+      updateCurrentTabData({ error: "두 개의 revision을 모두 선택해주세요." });
       return;
     }
+    const tabId = activeTabId;
     console.log("조회 버튼 동작");
-    setLoading(true);
-    setError(null);
+    updateCurrentTabData({ loading: true, error: null });
     try {
       // 선택된 revision에서 import_id 추출
       // 다양한 형태의 ID 필드 지원 (id, _id, import_id 등)
@@ -270,8 +327,10 @@ function TestPage() {
       console.log("selectedRevision2:", selectedRevision2);
 
       if (!revision1 || !revision2) {
-        setError("선택된 revision을 찾을 수 없습니다.");
-        setLoading(false);
+        setTabData((prev) => ({
+          ...prev,
+          [tabId]: { ...(prev[tabId] || getInitialTabData()), error: "선택된 revision을 찾을 수 없습니다.", loading: false },
+        }));
         return;
       }
 
@@ -279,8 +338,10 @@ function TestPage() {
       const importId2 = revision2.import_id || revision2.importId;
 
       if (!importId1 || !importId2) {
-        setError("선택된 revision에 import_id가 없습니다.");
-        setLoading(false);
+        setTabData((prev) => ({
+          ...prev,
+          [tabId]: { ...(prev[tabId] || getInitialTabData()), error: "선택된 revision에 import_id가 없습니다.", loading: false },
+        }));
         return;
       }
 
@@ -318,8 +379,16 @@ function TestPage() {
       console.log("Processed Data 1:", data1Array);
       console.log("Processed Data 2:", data2Array);
 
-      setData1(data1Array);
-      setData2(data2Array);
+      setTabData((prev) => ({
+        ...prev,
+        [tabId]: {
+          ...(prev[tabId] || getInitialTabData()),
+          data1: data1Array,
+          data2: data2Array,
+          loading: false,
+          error: null,
+        },
+      }));
       // 테이블 영역이 렌더된 뒤 뷰포트 중앙으로 부드럽게 스크롤
       requestAnimationFrame(() => {
         setTimeout(() => {
@@ -332,12 +401,16 @@ function TestPage() {
       });
     } catch (err) {
       console.error("데이터 가져오기 오류:", err);
-      setError(
-        "데이터를 불러오는 중 오류가 발생했습니다: " +
-          (err.response?.data?.message || err.message)
-      );
-    } finally {
-      setLoading(false);
+      setTabData((prev) => ({
+        ...prev,
+        [tabId]: {
+          ...(prev[tabId] || getInitialTabData()),
+          loading: false,
+          error:
+            "데이터를 불러오는 중 오류가 발생했습니다: " +
+            (err.response?.data?.message || err.message),
+        },
+      }));
     }
   };
 
@@ -441,6 +514,49 @@ function TestPage() {
         <h1>투자 데이터 비교 페이지</h1>
         <p>MongoDB에서 가져온 데이터를 테이블로 표시합니다.</p>
 
+        <div className="sheet-tabs-wrap" role="tablist" aria-label="비교 시트 탭">
+          <div className="sheet-tabs">
+            {tabs.map((tab) => (
+              <div
+                key={tab.id}
+                role="tab"
+                aria-selected={activeTabId === tab.id}
+                tabIndex={activeTabId === tab.id ? 0 : -1}
+                className={`sheet-tab ${activeTabId === tab.id ? "active" : ""}`}
+                onClick={() => setActiveTab(tab.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setActiveTab(tab.id);
+                  }
+                }}
+              >
+                <span className="sheet-tab-label">{tab.name}</span>
+                {tabs.length > 1 && (
+                  <button
+                    type="button"
+                    className="sheet-tab-close"
+                    onClick={(e) => removeTab(tab.id, e)}
+                    aria-label={`${tab.name} 탭 닫기`}
+                    title="탭 닫기"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              className="sheet-tab-add"
+              onClick={addTab}
+              aria-label="새 비교 탭 추가"
+              title="새 탭 추가"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
         <div className="test-content">
           {/* 구간 1: 테이블 1/2 비교 — 스크롤 시 이 구간 끝에서 한 번 멈춤 */}
           <section
@@ -486,6 +602,9 @@ function TestPage() {
               </div>
             )}
 
+            {revisionListError && (
+              <div className="error-message">{revisionListError}</div>
+            )}
             {error && <div className="error-message">{error}</div>}
 
             {loading && (

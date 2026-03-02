@@ -24,7 +24,117 @@ body.test-page-scroll-snap {
 .test-page > p {
   text-align: center;
   color: #666;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
+}
+
+/* 엑셀 시트 스타일 탭 바 */
+.sheet-tabs-wrap {
+  margin-bottom: 0;
+  padding: 0 0.5rem 0 0.25rem;
+}
+
+.sheet-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  flex-wrap: wrap;
+  min-height: 32px;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+.sheet-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem 0.5rem;
+  margin-right: 2px;
+  background: #e8e8e8;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #333;
+  user-select: none;
+  position: relative;
+  top: 2px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.sheet-tab:hover {
+  background: #f0f0f0;
+  color: #000555;
+}
+
+.sheet-tab.active {
+  background: #fff;
+  color: #000555;
+  font-weight: 600;
+  border-color: #d4d4d4;
+  border-bottom: 1px solid #fff;
+  top: 3px;
+  padding-bottom: 0.5rem;
+  margin-bottom: -1px;
+  z-index: 1;
+}
+
+.sheet-tab-label {
+  white-space: nowrap;
+}
+
+.sheet-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 3px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.sheet-tab-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #c33;
+}
+
+.sheet-tab-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 0.5rem;
+  margin-left: 2px;
+  margin-bottom: 2px;
+  border: 1px dashed #b0b0b0;
+  background: #fafafa;
+  color: #666;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.sheet-tab-add:hover {
+  background: #f0f0f0;
+  border-color: #000555;
+  color: #000555;
 }
 
 .test-content {
