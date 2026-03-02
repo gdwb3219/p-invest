@@ -73,8 +73,8 @@
 }
 
 .history-table {
-  width: 100%;
-  min-width: 600px;
+  width: max-content;
+  table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 12px;
@@ -95,6 +95,7 @@
   text-align: left;
   font-weight: 500;
   border-right: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
 }
 
 .history-table th:last-child {
@@ -128,6 +129,7 @@
 .history-table td {
   padding: 0.3rem 0.5rem;
   border-bottom: 1px solid #e8e8e8;
+  white-space: nowrap;
 }
 
 .history-table tbody tr:hover {

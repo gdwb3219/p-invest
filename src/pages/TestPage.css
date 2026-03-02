@@ -241,13 +241,12 @@ body.test-page-scroll-snap {
 }
 
 .data-table {
-  width: 100%;
-  min-width: 600px;
+  width: max-content;
+  table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
   background: white;
   border-radius: 3px;
-  table-layout: auto;
 }
 
 /* 테이블1, 테이블2: 세로 스크롤 시 헤더 행 고정 (sticky) - overflow 제거로 .table-wrapper 기준 sticky 동작 */
@@ -270,6 +269,7 @@ body.test-page-scroll-snap {
   text-align: left;
   font-weight: 400;
   border-right: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
 }
 
 .data-table thead th:last-child {
@@ -302,6 +302,7 @@ body.test-page-scroll-snap {
 .data-table td {
   padding: 0.2rem;
   border-bottom: 1px solid #e0e0e0;
+  white-space: nowrap;
 }
 
 .data-table tbody tr:hover {
@@ -356,8 +357,8 @@ body.test-page-scroll-snap {
 }
 
 .changes-table {
-  width: 100%;
-  min-width: 600px;
+  width: max-content;
+  table-layout: auto;
   border-collapse: collapse;
   background: white;
 }
@@ -378,6 +379,7 @@ body.test-page-scroll-snap {
   padding: 0.2rem;
   text-align: left;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 /* 행 번호 컬럼: 가로 스크롤 시 왼쪽 고정 (비교 결과 테이블) */
@@ -424,6 +426,7 @@ body.test-page-scroll-snap {
 .changes-table td {
   padding: 0.3rem;
   border-bottom: 1px solid #e0e0e0;
+  white-space: nowrap;
 }
 
 .changes-table tbody tr:hover {
