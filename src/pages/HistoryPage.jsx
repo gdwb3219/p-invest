@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import "./HistoryPage.css";
-
+import ToggleDashboard from "../components/toggle-history/ToggleDashboard";
 const API_URL = "http://127.0.0.1:8080/api/sap-his-data/test";
 
 // "BizName", "BizNum"을 항상 왼쪽 열로 두기 위한 헤더 정렬
@@ -52,16 +52,16 @@ function HistoryPage() {
     data.length > 0 ? getOrderedHeaders(Object.keys(data[0])) : [];
 
   return (
-    <div className="page-container">
-      <div className="history-page">
+    <div className='page-container'>
+      <div className='history-page'>
         <h1>이력 페이지</h1>
         <p>DB 최신 데이터를 테이블로 확인할 수 있습니다.</p>
 
-        <div className="history-content">
-          <div className="history-toolbar">
+        <div className='history-content'>
+          <div className='history-toolbar'>
             <button
-              type="button"
-              className="history-refresh-btn"
+              type='button'
+              className='history-refresh-btn'
               onClick={fetchLatestData}
               disabled={loading}
             >
@@ -69,17 +69,17 @@ function HistoryPage() {
             </button>
           </div>
 
-          {error && <div className="history-error">{error}</div>}
+          {error && <div className='history-error'>{error}</div>}
           {loading && data.length === 0 && (
-            <div className="history-loading">데이터를 불러오는 중...</div>
+            <div className='history-loading'>데이터를 불러오는 중...</div>
           )}
 
           {!loading && data.length > 0 && (
-            <div className="history-table-wrapper">
-              <table className="history-table">
+            <div className='history-table-wrapper'>
+              <table className='history-table'>
                 <thead>
                   <tr>
-                    <th className="history-row-num">#</th>
+                    <th className='history-row-num'>#</th>
                     {headers.map((h, i) => (
                       <th key={i}>{h}</th>
                     ))}
@@ -88,7 +88,7 @@ function HistoryPage() {
                 <tbody>
                   {data.map((row, rowIndex) => (
                     <tr key={rowIndex}>
-                      <td className="history-row-num">{rowIndex + 1}</td>
+                      <td className='history-row-num'>{rowIndex + 1}</td>
                       {headers.map((header, colIndex) => (
                         <td key={colIndex}>{row[header] ?? ""}</td>
                       ))}
@@ -100,9 +100,11 @@ function HistoryPage() {
           )}
 
           {!loading && !error && data.length === 0 && (
-            <div className="history-empty">표시할 데이터가 없습니다.</div>
+            <div className='history-empty'>표시할 데이터가 없습니다.</div>
           )}
         </div>
+
+        <ToggleDashboard />
       </div>
     </div>
   );
