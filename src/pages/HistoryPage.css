@@ -1,0 +1,139 @@
+.history-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.history-page h1 {
+  text-align: center;
+  color: #000555;
+  margin-bottom: 1rem;
+}
+
+.history-page > p {
+  text-align: center;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.history-content {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  min-height: 200px;
+}
+
+.history-toolbar {
+  margin-bottom: 1rem;
+}
+
+.history-refresh-btn {
+  background-color: #000555;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.history-refresh-btn:hover:not(:disabled) {
+  background-color: #535bf2;
+}
+
+.history-refresh-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.history-error {
+  background: #fee;
+  color: #c33;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border: 1px solid #fcc;
+}
+
+.history-loading,
+.history-empty {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.history-table-wrapper {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 60vh;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.history-table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+  background: #fff;
+}
+
+.history-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #000555;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.history-table th {
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  font-weight: 500;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.history-table th:last-child {
+  border-right: none;
+}
+
+.history-table .history-row-num {
+  position: sticky;
+  left: 0;
+  min-width: 2.5rem;
+  width: 2.5rem;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.06);
+}
+
+.history-table thead .history-row-num {
+  background-color: #000555;
+  z-index: 11;
+}
+
+.history-table tbody .history-row-num {
+  background-color: #fff;
+  z-index: 4;
+}
+
+.history-table tbody tr:hover .history-row-num {
+  background-color: #f5f5f5;
+}
+
+.history-table td {
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.history-table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+.history-table tbody tr:last-child td {
+  border-bottom: none;
+}

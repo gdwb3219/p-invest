@@ -6,6 +6,7 @@ export const ROUTES = {
   HOME: "/",
   COMPARE: "/compare",
   TEST: "/test",
+  HISTORY: "/history",
   DASHBOARD: "/dashboard",
   SETTINGS: "/settings",
 };
@@ -22,6 +23,10 @@ export const ROUTE_META = {
   [ROUTES.TEST]: {
     label: "투자 비교",
     icon: "🧪",
+  },
+  [ROUTES.HISTORY]: {
+    label: "이력",
+    icon: "📜",
   },
   [ROUTES.DASHBOARD]: {
     label: "대시보드",
