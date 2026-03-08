@@ -13,10 +13,13 @@ const getOrderedHeaders = (headers) => {
   return [...first, ...rest];
 };
 
+const PRIMEKEY_COLUMN = "PrimeKey";
+
 function HistoryPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedPrimeKey, setSelectedPrimeKey] = useState(null);
 
   const fetchLatestData = useCallback(async () => {
     setLoading(true);
@@ -86,14 +89,31 @@ function HistoryPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      <td className='history-row-num'>{rowIndex + 1}</td>
-                      {headers.map((header, colIndex) => (
-                        <td key={colIndex}>{row[header] ?? ""}</td>
-                      ))}
-                    </tr>
-                  ))}
+                  {data.map((row, rowIndex) => {
+                    const primeKey = row[PRIMEKEY_COLUMN] ?? row["prime_key"] ?? rowIndex;
+                    const isSelected = selectedPrimeKey !== null && String(primeKey) === String(selectedPrimeKey);
+                    return (
+                      <tr
+                        key={rowIndex}
+                        onClick={() => setSelectedPrimeKey(String(primeKey))}
+                        className={isSelected ? "history-row-selected" : ""}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelectedPrimeKey(String(primeKey));
+                          }
+                        }}
+                        aria-pressed={isSelected}
+                      >
+                        <td className="history-row-num">{rowIndex + 1}</td>
+                        {headers.map((header, colIndex) => (
+                          <td key={colIndex}>{row[header] ?? ""}</td>
+                        ))}
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -104,7 +124,10 @@ function HistoryPage() {
           )}
         </div>
 
-        <ToggleDashboard />
+        <ToggleDashboard
+          selectedPrimeKey={selectedPrimeKey}
+          onClearSelection={() => setSelectedPrimeKey(null)}
+        />
       </div>
     </div>
   );
