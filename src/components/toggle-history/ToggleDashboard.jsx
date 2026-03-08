@@ -6,12 +6,13 @@ function ToggleDashboard() {
   const [data, setData] = useState([]);
   const [expandedRows, setExpandedRows] = useState(new Set());
 
-  useEffect(() => {
-    fetch(API_URL)
-      .then((res) => res.json())
-      .then((data) => setData(data))
-      .catch((err) => console.error("Error fetching data:", err));
-  }, []);
+  // useEffect(() => {
+  //   console.log("누가 소리를 내었는가?")
+  //   fetch(API_URL)
+  //     .then((res) => res.json())
+  //     .then((data) => setData(data))
+  //     .catch((err) => console.error("Error fetching data:", err));
+  // }, []);
 
   const toggleRow = (PK) => {
     const newExpandedRows = new Set(expandedRows);
