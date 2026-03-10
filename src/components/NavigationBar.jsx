@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { ROUTES, ROUTE_META } from "../constants/routes";
-import { FaTableColumns, FaFlask, FaClockRotateLeft, FaChartLine, FaSliders } from "react-icons/fa6";
+import { FaTableColumns, FaFlask, FaClockRotateLeft, FaChartLine, FaSliders, FaPenToSquare } from "react-icons/fa6";
 import "./NavigationBar.css";
 
 function NavigationBar() {
@@ -10,6 +10,7 @@ function NavigationBar() {
     [ROUTES.HISTORY]: <FaClockRotateLeft />,
     [ROUTES.DASHBOARD]: <FaChartLine />,
     [ROUTES.SETTINGS]: <FaSliders />,
+    [ROUTES.INVEST_REV]: <FaPenToSquare />,
   };
 
   return (

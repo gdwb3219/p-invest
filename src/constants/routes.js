@@ -9,6 +9,7 @@ export const ROUTES = {
   HISTORY: "/history",
   DASHBOARD: "/dashboard",
   SETTINGS: "/settings",
+  INVEST_REV: "/invest-rev",
 };
 
 /**
@@ -35,5 +36,9 @@ export const ROUTE_META = {
   [ROUTES.SETTINGS]: {
     label: "설정",
     icon: "⚙️",
+  },
+  [ROUTES.INVEST_REV]: {
+    label: "투자 변경 요청",
+    icon: "📝",
   },
 };

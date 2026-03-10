@@ -80,6 +80,10 @@
   font-size: 12px;
   background: #fff;
 }
+.history-table.history-table--fixed {
+  table-layout: fixed;
+  width: auto;
+}
 
 .history-table thead {
   position: sticky;
@@ -140,6 +144,14 @@
   background-color: #f5f5f5;
 }
 
+.history-table tbody tr.history-accordion-row {
+  cursor: default;
+}
+
+.history-table tbody tr.history-accordion-row:hover {
+  background-color: transparent;
+}
+
 .history-table tbody tr.history-row-selected {
   background-color: rgba(0, 5, 85, 0.12);
 }
@@ -149,5 +161,94 @@
 }
 
 .history-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* 아코디언: 펼침 아이콘 */
+.history-th-expand,
+.history-td-expand {
+  min-width: 3rem;
+}
+.history-expand-icon {
+  display: inline-block;
+  margin-right: 0.35rem;
+  font-size: 0.65rem;
+  vertical-align: 0.05em;
+  color: #666;
+  transition: transform 0.2s ease;
+}
+.history-expand-icon--open {
+  transform: rotate(90deg);
+}
+
+/* 아코디언: 슬라이드용 단일 행 + 셀 */
+.history-accordion-row {
+  cursor: default;
+}
+.history-accordion-td {
+  padding: 0 !important;
+  border-bottom: 1px solid #e8e8e8;
+  vertical-align: top;
+  overflow: hidden;
+}
+.history-accordion-row:last-child .history-accordion-td {
+  border-bottom: none;
+}
+.history-row-selected + .history-accordion-row .history-accordion-td {
+  border-top: 1px solid #e0e0e0;
+}
+
+/* grid 0fr → 1fr 로 높이 슬라이드 */
+.history-accordion-cell {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s ease-out;
+}
+.history-accordion-cell--open {
+  grid-template-rows: 1fr;
+}
+.history-accordion-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 셀 안 메시지 */
+.history-accordion-message {
+  padding: 0.6rem 0.75rem;
+  font-size: 0.95em;
+  color: #666;
+  background-color: #f8f9fc;
+}
+.history-accordion-message--loading,
+.history-accordion-message--empty {
+  font-style: italic;
+  text-align: center;
+}
+.history-accordion-message--error {
+  color: #c33;
+  font-style: normal;
+  text-align: center;
+}
+
+/* 셀 안 이력 테이블 */
+.history-accordion-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 12px;
+  background-color: #f8f9fc;
+}
+.history-accordion-table td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid #e8e8e8;
+  white-space: nowrap;
+}
+.history-accordion-table .history-accordion-td-num {
+  text-align: center;
+  font-weight: 500;
+  color: #555;
+  background-color: #eef0f5;
+}
+.history-accordion-table tbody tr:last-child td {
   border-bottom: none;
 }

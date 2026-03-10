@@ -5,6 +5,10 @@ import TestPage from "../pages/TestPage";
 import HistoryPage from "../pages/HistoryPage";
 import InvestDashboard from "../pages/InvestDashboard";
 import SettingPage from "../pages/SettingPage";
+import InvestRevPage from "../pages/InvestRevPage";
+import InvestRevList from "../pages/invest-rev/InvestRevList";
+import InvestRevRequest from "../pages/invest-rev/InvestRevRequest";
+import InvestRevHistory from "../pages/invest-rev/InvestRevHistory";
 
 function AppRoutes() {
   return (
@@ -18,6 +22,12 @@ function AppRoutes() {
       <Route path={ROUTES.HISTORY} element={<HistoryPage />} />
       <Route path={ROUTES.DASHBOARD} element={<InvestDashboard />} />
       <Route path={ROUTES.SETTINGS} element={<SettingPage />} />
+      <Route path={ROUTES.INVEST_REV} element={<InvestRevPage />}>
+        <Route index element={<Navigate to="list" replace />} />
+        <Route path="list" element={<InvestRevList />} />
+        <Route path="request" element={<InvestRevRequest />} />
+        <Route path="history" element={<InvestRevHistory />} />
+      </Route>
     </Routes>
   );
 }
