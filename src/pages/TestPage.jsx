@@ -4,7 +4,7 @@ import RevSelector from "../components/rev-compare/RevSelector";
 import "./TestPage.css";
 
 // "BizName", "BizNum"을 항상 왼쪽 열로 두기 위한 헤더 정렬 (컴포넌트 외부에서 상수로 사용)
-const KEY_FIRST = ["BizName", "BizNum"];
+const KEY_FIRST = ["구분0 (사업명)", "구분0 순번"];
 const getOrderedHeaders = (headers) => {
   if (!headers || headers.length === 0) return headers || [];
   const first = KEY_FIRST.filter((k) => headers.includes(k));
@@ -48,11 +48,10 @@ function TestPage() {
   const selectedRevision1 = currentTabData.selectedRevision1;
   const selectedRevision2 = currentTabData.selectedRevision2;
 
-  // "BizName" + "BizNum"을 unique key로 사용하여 비교 (삭제, 수정, 신규 판별)
+  // DB의 "prime-key"를 unique key로 사용하여 비교 (삭제, 수정, 신규 판별)
   const getUniqueKey = (row) => {
-    const 사업명 = row["BizName"] !== undefined ? String(row["BizName"]) : "";
-    const 순번 = row["BizNum"] !== undefined ? String(row["BizNum"]) : "";
-    return `${사업명}::${순번}`;
+    const v = row?.["prime-key"];
+    return v !== undefined && v !== null ? String(v) : "";
   };
 
   // Unique Key 기준으로 테이블 비교
@@ -89,6 +88,7 @@ function TestPage() {
 
     // 모든 Unique Key 수집
     const allKeys = new Set([...map1.keys(), ...map2.keys()]);
+    console.log("allKeys:", allKeys);
 
     const comparisonData = [];
     const rowTypeMap = {}; // Unique Key -> 타입 매핑
@@ -180,6 +180,12 @@ function TestPage() {
     ]);
     const changedColumnsOrdered = getOrderedHeaders(Array.from(withKeyColumns));
 
+    console.log("비교 결과");
+    console.log(comparisonData);
+    console.log(rowTypeMap);
+    console.log(changedColumnsOrdered);
+    console.log(allHeaders);
+
     return {
       comparisonData,
       rowTypeMap,
@@ -197,7 +203,7 @@ function TestPage() {
     setLoadingRevisions(true);
     try {
       const response = await axios.get(
-        "http://127.0.0.1:8080/api/imports/rev-list/"
+        "http://127.0.0.1:8080/api/imports/rev-list/",
       );
       const revisionsData = Array.isArray(response.data)
         ? response.data
@@ -213,15 +219,18 @@ function TestPage() {
     }
   };
 
-  const updateCurrentTabData = useCallback((updates) => {
-    setTabData((prev) => ({
-      ...prev,
-      [activeTabId]: {
-        ...(prev[activeTabId] || getInitialTabData()),
-        ...updates,
-      },
-    }));
-  }, [activeTabId]);
+  const updateCurrentTabData = useCallback(
+    (updates) => {
+      setTabData((prev) => ({
+        ...prev,
+        [activeTabId]: {
+          ...(prev[activeTabId] || getInitialTabData()),
+          ...updates,
+        },
+      }));
+    },
+    [activeTabId],
+  );
 
   const handleRevision1Change = (value) => {
     console.log("selectedRevision1 변경:", value);
@@ -315,10 +324,10 @@ function TestPage() {
       // 다양한 형태의 ID 필드 지원 (id, _id, import_id 등)
       const getRevisionId = (r) => r.id || r._id || r.import_id || String(r);
       const revision1 = revisions.find(
-        (r) => getRevisionId(r) === selectedRevision1
+        (r) => getRevisionId(r) === selectedRevision1,
       );
       const revision2 = revisions.find(
-        (r) => getRevisionId(r) === selectedRevision2
+        (r) => getRevisionId(r) === selectedRevision2,
       );
 
       console.log("revision1:", revision1);
@@ -329,7 +338,11 @@ function TestPage() {
       if (!revision1 || !revision2) {
         setTabData((prev) => ({
           ...prev,
-          [tabId]: { ...(prev[tabId] || getInitialTabData()), error: "선택된 revision을 찾을 수 없습니다.", loading: false },
+          [tabId]: {
+            ...(prev[tabId] || getInitialTabData()),
+            error: "선택된 revision을 찾을 수 없습니다.",
+            loading: false,
+          },
         }));
         return;
       }
@@ -340,7 +353,11 @@ function TestPage() {
       if (!importId1 || !importId2) {
         setTabData((prev) => ({
           ...prev,
-          [tabId]: { ...(prev[tabId] || getInitialTabData()), error: "선택된 revision에 import_id가 없습니다.", loading: false },
+          [tabId]: {
+            ...(prev[tabId] || getInitialTabData()),
+            error: "선택된 revision에 import_id가 없습니다.",
+            loading: false,
+          },
         }));
         return;
       }
@@ -424,13 +441,13 @@ function TestPage() {
   const headers2 = getHeaders(data2);
 
   // 셀이 차이가 있는지 확인 (기존 테이블용)
-  const isCellDifferent = (rowIndex, column) => {
+  const isCellDifferent = (tableId, rowIndex, column) => {
     if (!comparisonResult) return false;
-    const row = data1[rowIndex];
+    const row = tableId === 1 ? data1[rowIndex] : data2[rowIndex];
     if (!row) return false;
     const uniqueKey = getUniqueKey(row);
     const comparisonItem = comparisonResult.comparisonData.find(
-      (item) => item.uniqueKey === uniqueKey
+      (item) => item.uniqueKey === uniqueKey,
     );
     if (!comparisonItem) return false;
     return comparisonItem.rowDiff[column]?.changed || false;
@@ -451,7 +468,7 @@ function TestPage() {
       const cMax = Math.max(startCol, endCol);
       return row >= rMin && row <= rMax && col >= cMin && col <= cMax;
     },
-    [selection]
+    [selection],
   );
 
   const getCellFromPoint = useCallback((clientX, clientY) => {
@@ -477,10 +494,15 @@ function TestPage() {
     const tableId = parseInt(table.getAttribute("data-table-id"), 10);
     const row = parseInt(cell.getAttribute("data-row"), 10);
     const col = parseInt(cell.getAttribute("data-col"), 10);
-    if (Number.isNaN(tableId) || Number.isNaN(row) || Number.isNaN(col))
-      return;
+    if (Number.isNaN(tableId) || Number.isNaN(row) || Number.isNaN(col)) return;
     selectionStartRef.current = { tableId, row, col };
-    setSelection({ tableId, startRow: row, startCol: col, endRow: row, endCol: col });
+    setSelection({
+      tableId,
+      startRow: row,
+      startCol: col,
+      endRow: row,
+      endCol: col,
+    });
   }, []);
 
   useEffect(() => {
@@ -509,17 +531,21 @@ function TestPage() {
   }, [getCellFromPoint]);
 
   return (
-    <div className="page-container">
-      <div className="test-page">
+    <div className='page-container'>
+      <div className='test-page'>
         <h1>투자 데이터 비교 페이지</h1>
         <p>MongoDB에서 가져온 데이터를 테이블로 표시합니다.</p>
 
-        <div className="sheet-tabs-wrap" role="tablist" aria-label="비교 시트 탭">
-          <div className="sheet-tabs">
+        <div
+          className='sheet-tabs-wrap'
+          role='tablist'
+          aria-label='비교 시트 탭'
+        >
+          <div className='sheet-tabs'>
             {tabs.map((tab) => (
               <div
                 key={tab.id}
-                role="tab"
+                role='tab'
                 aria-selected={activeTabId === tab.id}
                 tabIndex={activeTabId === tab.id ? 0 : -1}
                 className={`sheet-tab ${activeTabId === tab.id ? "active" : ""}`}
@@ -531,14 +557,14 @@ function TestPage() {
                   }
                 }}
               >
-                <span className="sheet-tab-label">{tab.name}</span>
+                <span className='sheet-tab-label'>{tab.name}</span>
                 {tabs.length > 1 && (
                   <button
-                    type="button"
-                    className="sheet-tab-close"
+                    type='button'
+                    className='sheet-tab-close'
                     onClick={(e) => removeTab(tab.id, e)}
                     aria-label={`${tab.name} 탭 닫기`}
-                    title="탭 닫기"
+                    title='탭 닫기'
                   >
                     ×
                   </button>
@@ -546,27 +572,27 @@ function TestPage() {
               </div>
             ))}
             <button
-              type="button"
-              className="sheet-tab-add"
+              type='button'
+              className='sheet-tab-add'
               onClick={addTab}
-              aria-label="새 비교 탭 추가"
-              title="새 탭 추가"
+              aria-label='새 비교 탭 추가'
+              title='새 탭 추가'
             >
               +
             </button>
           </div>
         </div>
 
-        <div className="test-content">
+        <div className='test-content'>
           {/* 구간 1: 테이블 1/2 비교 — 스크롤 시 이 구간 끝에서 한 번 멈춤 */}
           <section
-            className="scroll-snap-section"
-            aria-label="테이블 비교 구간"
+            className='scroll-snap-section'
+            aria-label='테이블 비교 구간'
           >
-            <div className="revision-selector">
+            <div className='revision-selector'>
               <RevSelector
-                label="기준 Revision"
-                id="revision1"
+                label='기준 Revision'
+                id='revision1'
                 value={selectedRevision1}
                 onChange={handleRevision1Change}
                 revisions={revisions}
@@ -574,8 +600,8 @@ function TestPage() {
               />
 
               <RevSelector
-                label="비교 Revision"
-                id="revision2"
+                label='비교 Revision'
+                id='revision2'
                 value={selectedRevision2}
                 onChange={handleRevision2Change}
                 revisions={revisions}
@@ -584,7 +610,7 @@ function TestPage() {
 
               <button
                 onClick={fetchData}
-                className="query-btn"
+                className='query-btn'
                 disabled={
                   loading ||
                   loadingRevisions ||
@@ -597,36 +623,36 @@ function TestPage() {
             </div>
 
             {loadingRevisions && (
-              <div className="loading-message">
+              <div className='loading-message'>
                 Revision 목록을 불러오는 중...
               </div>
             )}
 
             {revisionListError && (
-              <div className="error-message">{revisionListError}</div>
+              <div className='error-message'>{revisionListError}</div>
             )}
-            {error && <div className="error-message">{error}</div>}
+            {error && <div className='error-message'>{error}</div>}
 
             {loading && (
-              <div className="loading-message">데이터를 불러오는 중...</div>
+              <div className='loading-message'>데이터를 불러오는 중...</div>
             )}
 
             {!loading && !error && (
-              <div className="tables-container" ref={tablesContainerRef}>
-                <div className="table-section">
+              <div className='tables-container' ref={tablesContainerRef}>
+                <div className='table-section'>
                   <h2>기준 투자 리스트</h2>
                   {data1.length > 0 ? (
                     <div
-                      className="table-wrapper"
+                      className='table-wrapper'
                       ref={table1Ref}
                       onMouseDown={handleTableMouseDown}
                       onSelectStart={(e) => e.preventDefault()}
                     >
-                      <table className="data-table" data-table-id={1}>
+                      <table className='data-table' data-table-id={1}>
                         <thead>
                           <tr>
                             <th
-                              className="row-num-column"
+                              className='row-num-column'
                               data-row={0}
                               data-col={0}
                             >
@@ -641,7 +667,7 @@ function TestPage() {
                                 >
                                   {header}
                                 </th>
-                              )
+                              ),
                             )}
                           </tr>
                         </thead>
@@ -663,13 +689,13 @@ function TestPage() {
                                     data-col={colIndex + 1}
                                     className={
                                       [
-                                        isCellDifferent(rowIndex, header)
+                                        isCellDifferent(1, rowIndex, header)
                                           ? "cell-different"
                                           : "",
                                         isCellInSelection(
                                           1,
                                           rowIndex + 1,
-                                          colIndex + 1
+                                          colIndex + 1,
                                         )
                                           ? "cell-selected"
                                           : "",
@@ -680,7 +706,7 @@ function TestPage() {
                                   >
                                     {row[header]}
                                   </td>
-                                )
+                                ),
                               )}
                             </tr>
                           ))}
@@ -692,20 +718,20 @@ function TestPage() {
                   )}
                 </div>
 
-                <div className="table-section">
+                <div className='table-section'>
                   <h2>신규 투자 리스트</h2>
                   {data2.length > 0 ? (
                     <div
-                      className="table-wrapper"
+                      className='table-wrapper'
                       ref={table2Ref}
                       onMouseDown={handleTableMouseDown}
                       onSelectStart={(e) => e.preventDefault()}
                     >
-                      <table className="data-table" data-table-id={2}>
+                      <table className='data-table' data-table-id={2}>
                         <thead>
                           <tr>
                             <th
-                              className="row-num-column"
+                              className='row-num-column'
                               data-row={0}
                               data-col={0}
                             >
@@ -720,7 +746,7 @@ function TestPage() {
                                 >
                                   {header}
                                 </th>
-                              )
+                              ),
                             )}
                           </tr>
                         </thead>
@@ -742,13 +768,13 @@ function TestPage() {
                                     data-col={colIndex + 1}
                                     className={
                                       [
-                                        isCellDifferent(rowIndex, header)
+                                        isCellDifferent(2, rowIndex, header)
                                           ? "cell-different"
                                           : "",
                                         isCellInSelection(
                                           2,
                                           rowIndex + 1,
-                                          colIndex + 1
+                                          colIndex + 1,
                                         )
                                           ? "cell-selected"
                                           : "",
@@ -759,7 +785,7 @@ function TestPage() {
                                   >
                                     {row[header]}
                                   </td>
-                                )
+                                ),
                               )}
                             </tr>
                           ))}
@@ -777,21 +803,21 @@ function TestPage() {
           {/* 구간 2: 비교 결과 테이블 — 스크롤 시 이 구간 끝에서 한 번 멈춤 */}
           {!loading && !error && data1.length > 0 && data2.length > 0 && (
             <section
-              className="scroll-snap-section"
-              aria-label="비교 결과 구간"
+              className='scroll-snap-section'
+              aria-label='비교 결과 구간'
             >
-              <div className="changes-section">
+              <div className='changes-section'>
                 <h2>비교 결과</h2>
                 {hasChanges ? (
-                  <div className="changes-table-wrapper">
-                    <table className="changes-table">
+                  <div className='changes-table-wrapper'>
+                    <table className='changes-table'>
                       <thead>
                         <tr>
-                          <th className="row-num-column">#</th>
+                          <th className='row-num-column'>#</th>
                           {changedColumns.map((header, index) => (
                             <th key={index}>{header}</th>
                           ))}
-                          <th className="type-column">변경 타입</th>
+                          <th className='type-column'>변경 타입</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -804,7 +830,7 @@ function TestPage() {
                                 key={item.uniqueKey}
                                 className={`type-${type}`}
                               >
-                                <td className="row-num-column">
+                                <td className='row-num-column'>
                                   {rowIndex + 1}
                                 </td>
                                 {changedColumns.map((column, colIndex) => {
@@ -819,15 +845,15 @@ function TestPage() {
                                       }
                                     >
                                       {hasChange ? (
-                                        <span className="cell-change-value">
-                                          <span className="old-value">
+                                        <span className='cell-change-value'>
+                                          <span className='old-value'>
                                             {diff.oldValue || "(비어있음)"}
                                           </span>
-                                          <span className="change-arrow">
+                                          <span className='change-arrow'>
                                             {" "}
                                             →{" "}
                                           </span>
-                                          <span className="new-value">
+                                          <span className='new-value'>
                                             {diff.newValue || "(비어있음)"}
                                           </span>
                                         </span>
@@ -844,13 +870,13 @@ function TestPage() {
                                 </td>
                               </tr>
                             );
-                          }
+                          },
                         )}
                       </tbody>
                     </table>
                   </div>
                 ) : (
-                  <div className="no-changes-message">
+                  <div className='no-changes-message'>
                     <p>✓ 모든 데이터가 동일합니다.</p>
                   </div>
                 )}
