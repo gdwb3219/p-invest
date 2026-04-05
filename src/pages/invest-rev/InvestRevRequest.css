@@ -1,0 +1,252 @@
+/* 변경 요청 — InvestRevPage 톤과 통일 */
+.invest-rev-request {
+  max-width: 1200px;
+}
+
+.invest-rev-request__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.invest-rev-request__btn {
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.invest-rev-request__btn--secondary {
+  background: #eef0f4;
+  color: #2a2d33;
+  border-color: #d8dce3;
+}
+
+.invest-rev-request__btn--secondary:hover:not(:disabled) {
+  background: #e2e5eb;
+}
+
+.invest-rev-request__btn--primary {
+  background: linear-gradient(135deg, #6f8cff, #5a6fd6);
+  color: #fff;
+  border-color: rgba(90, 111, 214, 0.5);
+}
+
+.invest-rev-request__btn--primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.invest-rev-request__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.invest-rev-request__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.invest-rev-request__error {
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.invest-rev-request__success {
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.invest-rev-request__layout {
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 380px);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .invest-rev-request__layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.invest-rev-request__panel {
+  background: #fafbfc;
+  border: 1px solid #e8eaef;
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+}
+
+.invest-rev-request__panel-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2a2d33;
+}
+
+.invest-rev-request__table-wrap {
+  overflow: auto;
+  max-height: min(52vh, 520px);
+  border: 1px solid #e8eaef;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.invest-rev-request__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.invest-rev-request__table th,
+.invest-rev-request__table td {
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid #eef0f4;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.invest-rev-request__table th {
+  position: sticky;
+  top: 0;
+  background: #f3f4f7;
+  color: #374151;
+  font-weight: 600;
+  z-index: 1;
+}
+
+.invest-rev-request__table tr:hover td {
+  background: #f9fafb;
+}
+
+.invest-rev-request__table tr.invest-rev-request__row--selected td {
+  background: rgba(111, 140, 255, 0.12);
+}
+
+.invest-rev-request__row-radio {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #5a6fd6;
+  cursor: pointer;
+}
+
+.invest-rev-request__badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.invest-rev-request__badge--pending {
+  background: rgba(245, 158, 11, 0.2);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+}
+
+.invest-rev-request__form-group {
+  margin-bottom: 1rem;
+}
+
+.invest-rev-request__form-group:last-child {
+  margin-bottom: 0;
+}
+
+.invest-rev-request__label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 0.35rem;
+}
+
+.invest-rev-request__input,
+.invest-rev-request__select,
+.invest-rev-request__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.875rem;
+  color: #1f2937;
+  background: #fff;
+}
+
+.invest-rev-request__input:focus,
+.invest-rev-request__select:focus,
+.invest-rev-request__textarea:focus {
+  outline: none;
+  border-color: #6f8cff;
+  box-shadow: 0 0 0 2px rgba(111, 140, 255, 0.2);
+}
+
+.invest-rev-request__textarea {
+  min-height: 4rem;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.invest-rev-request__readonly {
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  font-size: 0.85rem;
+  color: #374151;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+.invest-rev-request__preview {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #d8dce3;
+}
+
+.invest-rev-request__preview-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0 0 0.5rem 0;
+}
+
+.invest-rev-request__preview-pre {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  overflow: auto;
+  max-height: 200px;
+}
+
+.invest-rev-request__empty {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.invest-rev-request__loading {
+  color: #5c6370;
+  font-size: 0.9rem;
+}

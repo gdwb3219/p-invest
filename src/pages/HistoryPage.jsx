@@ -1,12 +1,19 @@
-import { useState, useEffect, useLayoutEffect, useCallback, Fragment, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  Fragment,
+  useRef,
+} from "react";
 import axios from "axios";
 import "./HistoryPage.css";
 
 const API_URL = "http://127.0.0.1:8080/api/sap-his-data/test";
 const API_BASE = "http://127.0.0.1:8080/api/sap-his-data";
-const PRIMEKEY_QUERY_PARAM = "prime_key";
+const PRIMEKEY_QUERY_PARAM = "prime-key";
 
-const KEY_FIRST = ["BizName", "BizNum"];
+const KEY_FIRST = ["구분0 (사업명)", "구분0 순번"];
 const getOrderedHeaders = (headers) => {
   if (!headers || headers.length === 0) return headers || [];
   const first = KEY_FIRST.filter((k) => headers.includes(k));
@@ -14,7 +21,7 @@ const getOrderedHeaders = (headers) => {
   return [...first, ...rest];
 };
 
-const PRIMEKEY_COLUMN = "PrimeKey";
+const PRIMEKEY_COLUMN = "prime-key";
 
 function HistoryPage() {
   const [data, setData] = useState([]);
@@ -75,7 +82,11 @@ function HistoryPage() {
             [raw].filter(Boolean));
         setHistoryByPrimeKey((prev) => ({
           ...prev,
-          [key]: { rows: Array.isArray(list) ? list : [], loading: false, error: null },
+          [key]: {
+            rows: Array.isArray(list) ? list : [],
+            loading: false,
+            error: null,
+          },
         }));
       })
       .catch((err) => {
@@ -120,16 +131,16 @@ function HistoryPage() {
   }, [data.length, expandedPrimeKey]);
 
   return (
-    <div className="page-container">
-      <div className="history-page">
+    <div className='page-container'>
+      <div className='history-page'>
         <h1>이력 페이지</h1>
         <p>행을 클릭하면 해당 PrimeKey의 변경 이력이 바로 아래에 펼쳐집니다.</p>
 
-        <div className="history-content">
-          <div className="history-toolbar">
+        <div className='history-content'>
+          <div className='history-toolbar'>
             <button
-              type="button"
-              className="history-refresh-btn"
+              type='button'
+              className='history-refresh-btn'
               onClick={fetchLatestData}
               disabled={loading}
             >
@@ -137,13 +148,13 @@ function HistoryPage() {
             </button>
           </div>
 
-          {error && <div className="history-error">{error}</div>}
+          {error && <div className='history-error'>{error}</div>}
           {loading && data.length === 0 && (
-            <div className="history-loading">데이터를 불러오는 중...</div>
+            <div className='history-loading'>데이터를 불러오는 중...</div>
           )}
 
           {!loading && data.length > 0 && (
-            <div className="history-table-wrapper">
+            <div className='history-table-wrapper'>
               <table
                 ref={tableRef}
                 className={`history-table ${columnWidths.length === colSpan ? "history-table--fixed" : ""}`}
@@ -157,7 +168,7 @@ function HistoryPage() {
                 )}
                 <thead>
                   <tr>
-                    <th className="history-row-num history-th-expand">#</th>
+                    <th className='history-row-num history-th-expand'>#</th>
                     {headers.map((h, i) => (
                       <th key={i}>{h}</th>
                     ))}
@@ -175,10 +186,8 @@ function HistoryPage() {
                       <Fragment key={`row-${rowIndex}`}>
                         <tr
                           onClick={() => toggleExpand(primeKey)}
-                          className={
-                            isExpanded ? "history-row-selected" : ""
-                          }
-                          role="button"
+                          className={isExpanded ? "history-row-selected" : ""}
+                          role='button'
                           tabIndex={0}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
@@ -188,7 +197,7 @@ function HistoryPage() {
                           }}
                           aria-expanded={isExpanded}
                         >
-                          <td className="history-row-num history-td-expand">
+                          <td className='history-row-num history-td-expand'>
                             <span
                               className={`history-expand-icon ${isExpanded ? "history-expand-icon--open" : ""}`}
                               aria-hidden
@@ -198,54 +207,59 @@ function HistoryPage() {
                             {rowIndex + 1}
                           </td>
                           {headers.map((header, colIndex) => (
-                            <td key={colIndex}>
-                              {row[header] ?? ""}
-                            </td>
+                            <td key={colIndex}>{row[header] ?? ""}</td>
                           ))}
                         </tr>
                         <tr
                           className={`history-accordion-row ${isExpanded ? "history-accordion-row--open" : ""}`}
                           aria-hidden={!isExpanded}
                         >
-                          <td className="history-accordion-td" colSpan={colSpan}>
+                          <td
+                            className='history-accordion-td'
+                            colSpan={colSpan}
+                          >
                             <div
                               className={`history-accordion-cell ${isExpanded ? "history-accordion-cell--open" : ""}`}
                             >
-                              <div className="history-accordion-inner">
+                              <div className='history-accordion-inner'>
                                 {(isExpanded || history) && (
                                   <>
                                     {history?.loading && (
-                                      <div className="history-accordion-message history-accordion-message--loading">
+                                      <div className='history-accordion-message history-accordion-message--loading'>
                                         이력 불러오는 중...
                                       </div>
                                     )}
                                     {history?.error && !history?.loading && (
-                                      <div className="history-accordion-message history-accordion-message--error">
+                                      <div className='history-accordion-message history-accordion-message--error'>
                                         {history.error}
                                       </div>
                                     )}
                                     {!history?.loading &&
                                       !history?.error &&
                                       history?.rows?.length === 0 && (
-                                        <div className="history-accordion-message history-accordion-message--empty">
-                                          해당 PrimeKey로 저장된 이력이 없습니다.
+                                        <div className='history-accordion-message history-accordion-message--empty'>
+                                          해당 PrimeKey로 저장된 이력이
+                                          없습니다.
                                         </div>
                                       )}
                                     {!history?.loading &&
                                       !history?.error &&
                                       history?.rows?.length > 0 && (
-                                        <table className="history-accordion-table">
+                                        <table className='history-accordion-table'>
                                           {columnWidths.length === colSpan && (
                                             <colgroup>
                                               {columnWidths.map((w, i) => (
-                                                <col key={i} style={{ width: w }} />
+                                                <col
+                                                  key={i}
+                                                  style={{ width: w }}
+                                                />
                                               ))}
                                             </colgroup>
                                           )}
                                           <tbody>
                                             {history.rows.map((hisRow, i) => (
                                               <tr key={`his-${keyStr}-${i}`}>
-                                                <td className="history-accordion-td-num">
+                                                <td className='history-accordion-td-num'>
                                                   {i + 1}
                                                 </td>
                                                 {headers.map((header) => (
@@ -273,7 +287,7 @@ function HistoryPage() {
           )}
 
           {!loading && !error && data.length === 0 && (
-            <div className="history-empty">표시할 데이터가 없습니다.</div>
+            <div className='history-empty'>표시할 데이터가 없습니다.</div>
           )}
         </div>
       </div>
