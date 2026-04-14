@@ -1,4 +1,4 @@
-import "./RevSelector.css";
+import "../../styles/components/rev-compare/RevSelector.css";
 
 function RevSelector({
   label,

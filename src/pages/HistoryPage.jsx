@@ -7,7 +7,7 @@ import {
   useRef,
 } from "react";
 import axios from "axios";
-import "./HistoryPage.css";
+import "../styles/pages/HistoryPage.css";
 
 const API_URL = "http://127.0.0.1:8080/api/sap-his-data/test";
 const API_BASE = "http://127.0.0.1:8080/api/sap-his-data";

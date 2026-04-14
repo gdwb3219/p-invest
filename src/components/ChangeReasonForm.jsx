@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './ChangeReasonForm.css';
+import '../styles/components/ChangeReasonForm.css';
 
 function ChangeReasonForm({ rowIndex, column, oldValue, newValue, existingReason, onSubmit, onCancel }) {
   const [reason, setReason] = useState(existingReason || '');

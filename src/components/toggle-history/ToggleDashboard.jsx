@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import "./ToggleDashboard.css";
+import "../../styles/components/toggle-history/ToggleDashboard.css";
 
 const API_BASE = "http://127.0.0.1:8080/api/sap-his-data";
 /** 백엔드가 다른 키를 쓰면 변경 (예: PrimeKey) */

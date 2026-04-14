@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import "./InvestRevRequest.css";
+import "../../styles/pages/invest-rev/InvestRevRequest.css";
 
 /** 최신 시트(행 배열) — HistoryPage와 동일 소스 */
 const LATEST_SHEET_URL = "http://127.0.0.1:8080/api/sap-his-data/test";

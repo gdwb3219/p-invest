@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './DataInput.css';
+import '../styles/components/DataInput.css';
 
 function DataInput({ onDataChange, tableNumber }) {
   const [inputType, setInputType] = useState('csv');

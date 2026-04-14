@@ -1,5 +1,5 @@
 import TableComparator from '../components/TableComparator';
-import './ComparePage.css';
+import '../styles/pages/ComparePage.css';
 
 function ComparePage() {
   return (

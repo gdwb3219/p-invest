@@ -16,7 +16,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import "./InvestDashboard.css";
+import "../styles/pages/InvestDashboard.css";
 
 const CHART_COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#14b8a6", "#f59e0b"];
 const API_BASE = "http://127.0.0.1:8080";

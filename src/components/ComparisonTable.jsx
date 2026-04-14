@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import ChangeReasonForm from './ChangeReasonForm';
-import './ComparisonTable.css';
+import '../styles/components/ComparisonTable.css';
 
 function ComparisonTable({ table1, table2, table1Headers, table2Headers, comparisonResult, changeReasons, onChangeReasonSubmit }) {
   const { differentRows, rowDifferences, cellDifferences, allHeaders } = comparisonResult;

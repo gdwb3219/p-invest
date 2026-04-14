@@ -9,6 +9,8 @@ import InvestRevPage from "../pages/InvestRevPage";
 import InvestRevList from "../pages/invest-rev/InvestRevList";
 import InvestRevRequest from "../pages/invest-rev/InvestRevRequest";
 import InvestRevHistory from "../pages/invest-rev/InvestRevHistory";
+import InvestCommitteeChange from "../pages/invest-rev/InvestCommitteeChange";
+import NavExamplePlaceholder from "../pages/invest-rev/NavExamplePlaceholder";
 
 function AppRoutes() {
   return (
@@ -22,6 +24,14 @@ function AppRoutes() {
       <Route path={ROUTES.HISTORY} element={<HistoryPage />} />
       <Route path={ROUTES.DASHBOARD} element={<InvestDashboard />} />
       <Route path={ROUTES.SETTINGS} element={<SettingPage />} />
+      <Route
+        path={ROUTES.INVEST_REV_COMMITTEE_CHANGE}
+        element={<InvestCommitteeChange />}
+      />
+      <Route
+        path={ROUTES.INVEST_REV_EXAMPLE_2}
+        element={<NavExamplePlaceholder variant={2} />}
+      />
       <Route path={ROUTES.INVEST_REV} element={<InvestRevPage />}>
         <Route index element={<Navigate to="list" replace />} />
         <Route path="list" element={<InvestRevList />} />

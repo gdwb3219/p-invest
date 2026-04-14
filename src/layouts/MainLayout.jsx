@@ -1,5 +1,5 @@
 import NavigationBar from "../components/NavigationBar";
-import "./MainLayout.css";
+import "../styles/layouts/MainLayout.css";
 
 function MainLayout({ children }) {
   return (

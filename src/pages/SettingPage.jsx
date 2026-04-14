@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import "./SettingPage.css";
+import "../styles/pages/SettingPage.css";
 
 function SettingPage() {
   const [revisions, setRevisions] = useState([]);

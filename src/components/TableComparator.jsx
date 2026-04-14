@@ -3,7 +3,7 @@ import ComparisonTable from './ComparisonTable';
 import { compareTables } from '../utils/tableComparison';
 import { fetchTableDataFromMongoDB } from '../services/tableService';
 import { useChangeReasons } from '../hooks/useChangeReasons';
-import './TableComparator.css';
+import '../styles/components/TableComparator.css';
 
 function TableComparator() {
   const [table1, setTable1] = useState([]);

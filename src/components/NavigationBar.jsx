@@ -1,17 +1,53 @@
-import { NavLink } from "react-router-dom";
-import { ROUTES, ROUTE_META } from "../constants/routes";
-import { FaTableColumns, FaFlask, FaClockRotateLeft, FaChartLine, FaSliders, FaPenToSquare } from "react-icons/fa6";
-import "./NavigationBar.css";
+import { useEffect, useRef, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import {
+  ROUTES,
+  ROUTE_META,
+  CHANGE_REQUEST_NAV_GROUP,
+  INVEST_CHANGE_REQUEST_NAV_PREFIX,
+  isInvestRevLegacySubActive,
+  isChangeRequestNavSubActive,
+} from "../constants/routes";
+import {
+  FaTableColumns,
+  FaFlask,
+  FaClockRotateLeft,
+  FaChartLine,
+  FaSliders,
+  FaPenToSquare,
+  FaChevronDown,
+} from "react-icons/fa6";
+import "../styles/components/NavigationBar.css";
+
+const ICONS = {
+  [ROUTES.COMPARE]: <FaTableColumns />,
+  [ROUTES.TEST]: <FaFlask />,
+  [ROUTES.HISTORY]: <FaClockRotateLeft />,
+  [ROUTES.DASHBOARD]: <FaChartLine />,
+  [ROUTES.SETTINGS]: <FaSliders />,
+};
 
 function NavigationBar() {
-  const ICONS = {
-    [ROUTES.COMPARE]: <FaTableColumns />,
-    [ROUTES.TEST]: <FaFlask />,
-    [ROUTES.HISTORY]: <FaClockRotateLeft />,
-    [ROUTES.DASHBOARD]: <FaChartLine />,
-    [ROUTES.SETTINGS]: <FaSliders />,
-    [ROUTES.INVEST_REV]: <FaPenToSquare />,
-  };
+  const location = useLocation();
+  const prefix = INVEST_CHANGE_REQUEST_NAV_PREFIX;
+  const prevPathRef = useRef(location.pathname);
+
+  const [changeRequestOpen, setChangeRequestOpen] = useState(() =>
+    location.pathname.startsWith(prefix)
+  );
+
+  useEffect(() => {
+    const prev = prevPathRef.current;
+    const wasOutside = !prev.startsWith(prefix);
+    const nowInside = location.pathname.startsWith(prefix);
+    if (wasOutside && nowInside) setChangeRequestOpen(true);
+    if (!location.pathname.startsWith(prefix)) setChangeRequestOpen(false);
+    prevPathRef.current = location.pathname;
+  }, [location.pathname, prefix]);
+
+  const changeRequestMainActive = isChangeRequestNavSubActive(
+    location.pathname
+  );
 
   return (
     <nav className="navigation-bar">
@@ -32,10 +68,61 @@ function NavigationBar() {
             </NavLink>
           </li>
         ))}
+        <li className="nav-menu__group">
+          <button
+            type="button"
+            className={
+              changeRequestMainActive
+                ? "nav-group-toggle active"
+                : "nav-group-toggle"
+            }
+            aria-expanded={changeRequestOpen}
+            onClick={() => setChangeRequestOpen((open) => !open)}
+          >
+            <span className="nav-icon">
+              <FaPenToSquare />
+            </span>
+            <span className="nav-label">{CHANGE_REQUEST_NAV_GROUP.label}</span>
+            <span
+              className={
+                changeRequestOpen
+                  ? "nav-chevron nav-chevron--open"
+                  : "nav-chevron"
+              }
+              aria-hidden
+            >
+              <FaChevronDown />
+            </span>
+          </button>
+          {changeRequestOpen ? (
+            <ul className="nav-sub-menu">
+              {CHANGE_REQUEST_NAV_GROUP.children.map(({ path, label }) => {
+                const legacy = path === ROUTES.INVEST_REV;
+                return (
+                  <li key={path}>
+                    <NavLink
+                      to={path}
+                      end
+                      className={({ isActive }) =>
+                        (legacy
+                          ? isActive ||
+                            isInvestRevLegacySubActive(location.pathname)
+                          : isActive)
+                          ? "nav-sub-link active"
+                          : "nav-sub-link"
+                      }
+                    >
+                      {label}
+                    </NavLink>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </li>
       </ul>
     </nav>
   );
 }
 
 export default NavigationBar;
-

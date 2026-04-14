@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import axios from "axios";
 import RevSelector from "../components/rev-compare/RevSelector";
-import "./TestPage.css";
+import "../styles/pages/TestPage.css";
 
 // "BizName", "BizNum"을 항상 왼쪽 열로 두기 위한 헤더 정렬 (컴포넌트 외부에서 상수로 사용)
 const KEY_FIRST = ["구분0 (사업명)", "구분0 순번"];

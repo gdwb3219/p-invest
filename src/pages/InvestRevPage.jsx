@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import "./InvestRevPage.css";
+import "../styles/pages/InvestRevPage.css";
 
 const TAB_ROUTES = [
   { path: "list", label: "요청 목록" },
