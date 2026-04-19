@@ -203,7 +203,7 @@ function TestPage() {
     setLoadingRevisions(true);
     try {
       const response = await axios.get(
-        "http://127.0.0.1:8080/api/imports/rev-list/",
+        "http://127.0.0.1:8080/pinvest/imports/rev-list/",
       );
       const revisionsData = Array.isArray(response.data)
         ? response.data
@@ -366,10 +366,10 @@ function TestPage() {
       console.log("importId1:", importId1);
       console.log("importId2:", importId2);
       const [response1, response2] = await Promise.all([
-        axios.get(`http://127.0.0.1:8080/api/imports/rev-data`, {
+        axios.get(`http://127.0.0.1:8080/pinvest/imports/rev-data`, {
           params: { import_id: importId1 },
         }),
-        axios.get(`http://127.0.0.1:8080/api/imports/rev-data`, {
+        axios.get(`http://127.0.0.1:8080/pinvest/imports/rev-data`, {
           params: { import_id: importId2 },
         }),
       ]);
@@ -531,21 +531,21 @@ function TestPage() {
   }, [getCellFromPoint]);
 
   return (
-    <div className='page-container'>
-      <div className='test-page'>
+    <div className="page-container">
+      <div className="test-page">
         <h1>투자 데이터 비교 페이지</h1>
         <p>MongoDB에서 가져온 데이터를 테이블로 표시합니다.</p>
 
         <div
-          className='sheet-tabs-wrap'
-          role='tablist'
-          aria-label='비교 시트 탭'
+          className="sheet-tabs-wrap"
+          role="tablist"
+          aria-label="비교 시트 탭"
         >
-          <div className='sheet-tabs'>
+          <div className="sheet-tabs">
             {tabs.map((tab) => (
               <div
                 key={tab.id}
-                role='tab'
+                role="tab"
                 aria-selected={activeTabId === tab.id}
                 tabIndex={activeTabId === tab.id ? 0 : -1}
                 className={`sheet-tab ${activeTabId === tab.id ? "active" : ""}`}
@@ -557,14 +557,14 @@ function TestPage() {
                   }
                 }}
               >
-                <span className='sheet-tab-label'>{tab.name}</span>
+                <span className="sheet-tab-label">{tab.name}</span>
                 {tabs.length > 1 && (
                   <button
-                    type='button'
-                    className='sheet-tab-close'
+                    type="button"
+                    className="sheet-tab-close"
                     onClick={(e) => removeTab(tab.id, e)}
                     aria-label={`${tab.name} 탭 닫기`}
-                    title='탭 닫기'
+                    title="탭 닫기"
                   >
                     ×
                   </button>
@@ -572,27 +572,27 @@ function TestPage() {
               </div>
             ))}
             <button
-              type='button'
-              className='sheet-tab-add'
+              type="button"
+              className="sheet-tab-add"
               onClick={addTab}
-              aria-label='새 비교 탭 추가'
-              title='새 탭 추가'
+              aria-label="새 비교 탭 추가"
+              title="새 탭 추가"
             >
               +
             </button>
           </div>
         </div>
 
-        <div className='test-content'>
+        <div className="test-content">
           {/* 구간 1: 테이블 1/2 비교 — 스크롤 시 이 구간 끝에서 한 번 멈춤 */}
           <section
-            className='scroll-snap-section'
-            aria-label='테이블 비교 구간'
+            className="scroll-snap-section"
+            aria-label="테이블 비교 구간"
           >
-            <div className='revision-selector'>
+            <div className="revision-selector">
               <RevSelector
-                label='기준 Revision'
-                id='revision1'
+                label="기준 Revision"
+                id="revision1"
                 value={selectedRevision1}
                 onChange={handleRevision1Change}
                 revisions={revisions}
@@ -600,8 +600,8 @@ function TestPage() {
               />
 
               <RevSelector
-                label='비교 Revision'
-                id='revision2'
+                label="비교 Revision"
+                id="revision2"
                 value={selectedRevision2}
                 onChange={handleRevision2Change}
                 revisions={revisions}
@@ -610,7 +610,7 @@ function TestPage() {
 
               <button
                 onClick={fetchData}
-                className='query-btn'
+                className="query-btn"
                 disabled={
                   loading ||
                   loadingRevisions ||
@@ -623,36 +623,36 @@ function TestPage() {
             </div>
 
             {loadingRevisions && (
-              <div className='loading-message'>
+              <div className="loading-message">
                 Revision 목록을 불러오는 중...
               </div>
             )}
 
             {revisionListError && (
-              <div className='error-message'>{revisionListError}</div>
+              <div className="error-message">{revisionListError}</div>
             )}
-            {error && <div className='error-message'>{error}</div>}
+            {error && <div className="error-message">{error}</div>}
 
             {loading && (
-              <div className='loading-message'>데이터를 불러오는 중...</div>
+              <div className="loading-message">데이터를 불러오는 중...</div>
             )}
 
             {!loading && !error && (
-              <div className='tables-container' ref={tablesContainerRef}>
-                <div className='table-section'>
+              <div className="tables-container" ref={tablesContainerRef}>
+                <div className="table-section">
                   <h2>기준 투자 리스트</h2>
                   {data1.length > 0 ? (
                     <div
-                      className='table-wrapper'
+                      className="table-wrapper"
                       ref={table1Ref}
                       onMouseDown={handleTableMouseDown}
                       onSelectStart={(e) => e.preventDefault()}
                     >
-                      <table className='data-table' data-table-id={1}>
+                      <table className="data-table" data-table-id={1}>
                         <thead>
                           <tr>
                             <th
-                              className='row-num-column'
+                              className="row-num-column"
                               data-row={0}
                               data-col={0}
                             >
@@ -718,20 +718,20 @@ function TestPage() {
                   )}
                 </div>
 
-                <div className='table-section'>
+                <div className="table-section">
                   <h2>신규 투자 리스트</h2>
                   {data2.length > 0 ? (
                     <div
-                      className='table-wrapper'
+                      className="table-wrapper"
                       ref={table2Ref}
                       onMouseDown={handleTableMouseDown}
                       onSelectStart={(e) => e.preventDefault()}
                     >
-                      <table className='data-table' data-table-id={2}>
+                      <table className="data-table" data-table-id={2}>
                         <thead>
                           <tr>
                             <th
-                              className='row-num-column'
+                              className="row-num-column"
                               data-row={0}
                               data-col={0}
                             >
@@ -803,21 +803,21 @@ function TestPage() {
           {/* 구간 2: 비교 결과 테이블 — 스크롤 시 이 구간 끝에서 한 번 멈춤 */}
           {!loading && !error && data1.length > 0 && data2.length > 0 && (
             <section
-              className='scroll-snap-section'
-              aria-label='비교 결과 구간'
+              className="scroll-snap-section"
+              aria-label="비교 결과 구간"
             >
-              <div className='changes-section'>
+              <div className="changes-section">
                 <h2>비교 결과</h2>
                 {hasChanges ? (
-                  <div className='changes-table-wrapper'>
-                    <table className='changes-table'>
+                  <div className="changes-table-wrapper">
+                    <table className="changes-table">
                       <thead>
                         <tr>
-                          <th className='row-num-column'>#</th>
+                          <th className="row-num-column">#</th>
                           {changedColumns.map((header, index) => (
                             <th key={index}>{header}</th>
                           ))}
-                          <th className='type-column'>변경 타입</th>
+                          <th className="type-column">변경 타입</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -830,7 +830,7 @@ function TestPage() {
                                 key={item.uniqueKey}
                                 className={`type-${type}`}
                               >
-                                <td className='row-num-column'>
+                                <td className="row-num-column">
                                   {rowIndex + 1}
                                 </td>
                                 {changedColumns.map((column, colIndex) => {
@@ -845,15 +845,15 @@ function TestPage() {
                                       }
                                     >
                                       {hasChange ? (
-                                        <span className='cell-change-value'>
-                                          <span className='old-value'>
+                                        <span className="cell-change-value">
+                                          <span className="old-value">
                                             {diff.oldValue || "(비어있음)"}
                                           </span>
-                                          <span className='change-arrow'>
+                                          <span className="change-arrow">
                                             {" "}
                                             →{" "}
                                           </span>
-                                          <span className='new-value'>
+                                          <span className="new-value">
                                             {diff.newValue || "(비어있음)"}
                                           </span>
                                         </span>
@@ -876,7 +876,7 @@ function TestPage() {
                     </table>
                   </div>
                 ) : (
-                  <div className='no-changes-message'>
+                  <div className="no-changes-message">
                     <p>✓ 모든 데이터가 동일합니다.</p>
                   </div>
                 )}

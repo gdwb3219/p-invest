@@ -41,9 +41,17 @@ export function isInvestRevLegacySubActive(pathname) {
   );
 }
 
+/** 투심위 변경 섹션(/invest-rev/committee-change/…) 활성 여부 */
+export function isCommitteeChangeNavActive(pathname) {
+  return (
+    pathname === ROUTES.INVEST_REV_COMMITTEE_CHANGE ||
+    pathname.startsWith(`${ROUTES.INVEST_REV_COMMITTEE_CHANGE}/`)
+  );
+}
+
 /** 변경 요청 그룹 서브 중 하나가 현재 경로와 일치하는지 */
 export function isChangeRequestNavSubActive(pathname) {
-  if (pathname === ROUTES.INVEST_REV_COMMITTEE_CHANGE) return true;
+  if (isCommitteeChangeNavActive(pathname)) return true;
   if (pathname === ROUTES.INVEST_REV_EXAMPLE_2) return true;
   return isInvestRevLegacySubActive(pathname);
 }

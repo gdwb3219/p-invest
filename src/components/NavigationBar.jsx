@@ -7,6 +7,7 @@ import {
   INVEST_CHANGE_REQUEST_NAV_PREFIX,
   isInvestRevLegacySubActive,
   isChangeRequestNavSubActive,
+  isCommitteeChangeNavActive,
 } from "../constants/routes";
 import {
   FaTableColumns,
@@ -98,6 +99,7 @@ function NavigationBar() {
             <ul className="nav-sub-menu">
               {CHANGE_REQUEST_NAV_GROUP.children.map(({ path, label }) => {
                 const legacy = path === ROUTES.INVEST_REV;
+                const committee = path === ROUTES.INVEST_REV_COMMITTEE_CHANGE;
                 return (
                   <li key={path}>
                     <NavLink
@@ -107,7 +109,10 @@ function NavigationBar() {
                         (legacy
                           ? isActive ||
                             isInvestRevLegacySubActive(location.pathname)
-                          : isActive)
+                          : committee
+                            ? isActive ||
+                              isCommitteeChangeNavActive(location.pathname)
+                            : isActive)
                           ? "nav-sub-link active"
                           : "nav-sub-link"
                       }

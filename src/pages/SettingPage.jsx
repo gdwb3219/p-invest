@@ -22,7 +22,7 @@ function SettingPage() {
     setError(null);
     try {
       const response = await axios.get(
-        "http://127.0.0.1:8080/api/imports/rev-list/",
+        "http://127.0.0.1:8080/pinvest/imports/rev-list/",
       );
       const revisionsData = Array.isArray(response.data)
         ? response.data
@@ -62,10 +62,10 @@ function SettingPage() {
     try {
       // imports 콜렉션과 sap_his_data 콜렉션에서 삭제
       const [importsResponse, sapHisResponse] = await Promise.all([
-        axios.delete(`http://127.0.0.1:8080/api/imports/delete/`, {
+        axios.delete(`http://127.0.0.1:8080/pinvest/imports/delete/`, {
           params: { import_id: selectedVersion },
         }),
-        axios.delete(`http://127.0.0.1:8080/api/sap-his-data/delete/`, {
+        axios.delete(`http://127.0.0.1:8080/pinvest/sap-his-data/delete/`, {
           params: { import_id: selectedVersion },
         }),
       ]);
@@ -123,7 +123,7 @@ function SettingPage() {
   // Test Area
   const handleTest = async () => {
     const response = await axios.get(
-      "http://127.0.0.1:8080/api/sap-his-data/test",
+      "http://127.0.0.1:8080/pinvest/sap-his-data/test",
     );
     console.log(response.data, "TEST Data");
   };

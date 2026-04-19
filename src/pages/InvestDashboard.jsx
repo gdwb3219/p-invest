@@ -41,10 +41,10 @@ function InvestDashboard() {
     setLoadingRevisions(true);
     setError(null);
     try {
-      const res = await axios.get(`${API_BASE}/api/imports/rev-list/`);
+      const res = await axios.get(`${API_BASE}/pinvest/imports/rev-list/`);
       const list = Array.isArray(res.data)
         ? res.data
-        : res.data?.data ?? res.data?.results ?? [];
+        : (res.data?.data ?? res.data?.results ?? []);
       setRevisions(list);
     } catch (err) {
       console.error("Revision 목록 조회 실패:", err);
@@ -63,7 +63,7 @@ function InvestDashboard() {
     setError(null);
     try {
       const rev = revisions.find(
-        (r) => (r.id ?? r._id ?? r.import_id ?? String(r)) === selectedRevId
+        (r) => (r.id ?? r._id ?? r.import_id ?? String(r)) === selectedRevId,
       );
       const importId = rev?.import_id ?? rev?.importId;
       if (!importId) {
@@ -71,12 +71,12 @@ function InvestDashboard() {
         setLoadingData(false);
         return;
       }
-      const res = await axios.get(`${API_BASE}/api/imports/rev-data`, {
+      const res = await axios.get(`${API_BASE}/pinvest/imports/rev-data`, {
         params: { import_id: importId },
       });
       const data = Array.isArray(res.data)
         ? res.data
-        : res.data?.data ?? res.data?.results ?? res.data?.sap_his_data ?? [];
+        : (res.data?.data ?? res.data?.results ?? res.data?.sap_his_data ?? []);
       setRawData(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Rev 데이터 조회 실패:", err);
@@ -93,7 +93,7 @@ function InvestDashboard() {
     return (
       keys.find(
         (k) =>
-          k.toLowerCase() === "투자명" || k.toLowerCase().includes("투자명")
+          k.toLowerCase() === "투자명" || k.toLowerCase().includes("투자명"),
       ) ?? null
     );
   }, [rawData]);
@@ -115,7 +115,6 @@ function InvestDashboard() {
       }) ?? null
     );
   }, [rawData]);
-
 
   const genderChartData = useMemo(() => {
     if (!genderKey || !rawData.length) return [];
@@ -144,14 +143,13 @@ function InvestDashboard() {
       .slice(0, 15);
   }, [rawData, rateKey]);
 
-
   const hasCharts = genderChartData.length > 0 || rateChartData.length > 0;
 
   const handleDash = async () => {
     setLoadingDash(true);
     setError(null);
     try {
-      const res = await axios.get(`${API_BASE}/api/sap-his-data/dash`);
+      const res = await axios.get(`${API_BASE}/pinvest/sap-his-data/dash`);
       const data = res.data ?? {};
       setDashData(Array.isArray(data.chartData) ? data.chartData : []);
       setDashPieData(Array.isArray(data.pieData) ? data.pieData : []);
@@ -168,7 +166,8 @@ function InvestDashboard() {
   };
 
   const dashBarDataKeys = useMemo(() => {
-    if (!dashData.length || !dashData[0]) return { nameKey: "name", valueKey: "value" };
+    if (!dashData.length || !dashData[0])
+      return { nameKey: "name", valueKey: "value" };
     const keys = Object.keys(dashData[0]);
     const nameKey =
       keys.find((k) => k.toLowerCase() === "name" || k === "name") ?? keys[0];
@@ -178,31 +177,39 @@ function InvestDashboard() {
           k !== nameKey &&
           (typeof dashData[0][k] === "number" ||
             k.toLowerCase().includes("value") ||
-            k.toLowerCase().includes("count"))
-      ) ?? keys[1] ?? "value";
+            k.toLowerCase().includes("count")),
+      ) ??
+      keys[1] ??
+      "value";
     return { nameKey, valueKey };
   }, [dashData]);
 
   const dashPieDataKeys = useMemo(() => {
-    if (!dashPieData.length || !dashPieData[0]) return { nameKey: "name", valueKey: "value" };
+    if (!dashPieData.length || !dashPieData[0])
+      return { nameKey: "name", valueKey: "value" };
     const keys = Object.keys(dashPieData[0]);
-    const nameKey = keys.find((k) => k.toLowerCase() === "name" || k === "name") ?? keys[0];
+    const nameKey =
+      keys.find((k) => k.toLowerCase() === "name" || k === "name") ?? keys[0];
     const valueKey =
       keys.find(
         (k) =>
           k !== nameKey &&
-          (typeof dashPieData[0][k] === "number" || k.toLowerCase().includes("value"))
-      ) ?? keys[1] ?? "value";
+          (typeof dashPieData[0][k] === "number" ||
+            k.toLowerCase().includes("value")),
+      ) ??
+      keys[1] ??
+      "value";
     return { nameKey, valueKey };
   }, [dashPieData]);
 
   const dashLineDataKeys = useMemo(() => {
-    if (!dashLineData.length || !dashLineData[0]) return { nameKey: "name", lineKeys: [] };
+    if (!dashLineData.length || !dashLineData[0])
+      return { nameKey: "name", lineKeys: [] };
     const keys = Object.keys(dashLineData[0]);
     const nameKey =
       keys.find((k) => k.toLowerCase() === "name" || k === "name") ?? keys[0];
     const lineKeys = keys.filter(
-      (k) => k !== nameKey && typeof dashLineData[0][k] === "number"
+      (k) => k !== nameKey && typeof dashLineData[0][k] === "number",
     );
     return { nameKey, lineKeys };
   }, [dashLineData]);
@@ -247,7 +254,9 @@ function InvestDashboard() {
       )}
       {error && <div className="dashboard-error">{error}</div>}
       {loadingDash && (
-        <div className="dashboard-message">대시 차트 데이터를 불러오는 중...</div>
+        <div className="dashboard-message">
+          대시 차트 데이터를 불러오는 중...
+        </div>
       )}
 
       {!loadingData && rawData.length > 0 && !hasCharts && (
@@ -319,101 +328,110 @@ function InvestDashboard() {
       )}
 
       <span>대시 데이터</span>
-      {!loadingDash && (dashData.length > 0 || dashPieData.length > 0 || dashLineData.length > 0) && (
-        <div className="dashboard-charts">
-          {dashData.length > 0 && (
-            <div className="chart-card chart-card-wide">
-              <h2>SAP 이력 대시 (Bar)</h2>
-              <ResponsiveContainer width="100%" height={360}>
-                <BarChart
-                  data={dashData}
-                  margin={{ top: 16, right: 24, left: 16, bottom: 60 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey={dashBarDataKeys.nameKey}
-                    tick={{ fontSize: 12 }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={60}
-                  />
-                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar
-                    dataKey={dashBarDataKeys.valueKey}
-                    name={dashBarDataKeys.valueKey}
-                    fill="#6366f1"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-          {dashPieData.length > 0 && (
-            <div className="chart-card">
-              <h2>SAP 이력 대시 (Pie)</h2>
-              <ResponsiveContainer width="100%" height={360}>
-                <PieChart>
-                  <Pie
-                    data={dashPieData}
-                    dataKey={dashPieDataKeys.valueKey}
-                    nameKey={dashPieDataKeys.nameKey}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={120}
-                    label={({ [dashPieDataKeys.nameKey]: name, [dashPieDataKeys.valueKey]: value }) => `${name}: ${value}`}
+      {!loadingDash &&
+        (dashData.length > 0 ||
+          dashPieData.length > 0 ||
+          dashLineData.length > 0) && (
+          <div className="dashboard-charts">
+            {dashData.length > 0 && (
+              <div className="chart-card chart-card-wide">
+                <h2>SAP 이력 대시 (Bar)</h2>
+                <ResponsiveContainer width="100%" height={360}>
+                  <BarChart
+                    data={dashData}
+                    margin={{ top: 16, right: 24, left: 16, bottom: 60 }}
                   >
-                    {dashPieData.map((_, i) => (
-                      <Cell
-                        key={i}
-                        fill={CHART_COLORS[i % CHART_COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => [value, dashPieDataKeys.valueKey]} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-          {dashLineData.length > 0 && dashLineDataKeys.lineKeys.length > 0 && (
-            <div className="chart-card chart-card-wide">
-              <h2>SAP 이력 대시 (다중 Line)</h2>
-              <ResponsiveContainer width="100%" height={360}>
-                <LineChart
-                  data={dashLineData}
-                  margin={{ top: 16, right: 24, left: 16, bottom: 60 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey={dashLineDataKeys.nameKey}
-                    tick={{ fontSize: 12 }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={60}
-                  />
-                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                  <Tooltip />
-                  <Legend />
-                  {dashLineDataKeys.lineKeys.map((key, i) => (
-                    <Line
-                      key={key}
-                      type="monotone"
-                      dataKey={key}
-                      name={key}
-                      stroke={CHART_COLORS[i % CHART_COLORS.length]}
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6 }}
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey={dashBarDataKeys.nameKey}
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
                     />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div>
-      )}
+                    <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar
+                      dataKey={dashBarDataKeys.valueKey}
+                      name={dashBarDataKeys.valueKey}
+                      fill="#6366f1"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            {dashPieData.length > 0 && (
+              <div className="chart-card">
+                <h2>SAP 이력 대시 (Pie)</h2>
+                <ResponsiveContainer width="100%" height={360}>
+                  <PieChart>
+                    <Pie
+                      data={dashPieData}
+                      dataKey={dashPieDataKeys.valueKey}
+                      nameKey={dashPieDataKeys.nameKey}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={120}
+                      label={({
+                        [dashPieDataKeys.nameKey]: name,
+                        [dashPieDataKeys.valueKey]: value,
+                      }) => `${name}: ${value}`}
+                    >
+                      {dashPieData.map((_, i) => (
+                        <Cell
+                          key={i}
+                          fill={CHART_COLORS[i % CHART_COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value) => [value, dashPieDataKeys.valueKey]}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            {dashLineData.length > 0 &&
+              dashLineDataKeys.lineKeys.length > 0 && (
+                <div className="chart-card chart-card-wide">
+                  <h2>SAP 이력 대시 (다중 Line)</h2>
+                  <ResponsiveContainer width="100%" height={360}>
+                    <LineChart
+                      data={dashLineData}
+                      margin={{ top: 16, right: 24, left: 16, bottom: 60 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis
+                        dataKey={dashLineDataKeys.nameKey}
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                      <Tooltip />
+                      <Legend />
+                      {dashLineDataKeys.lineKeys.map((key, i) => (
+                        <Line
+                          key={key}
+                          type="monotone"
+                          dataKey={key}
+                          name={key}
+                          stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+          </div>
+        )}
     </div>
   );
 }

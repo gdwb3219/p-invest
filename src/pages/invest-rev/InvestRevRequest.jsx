@@ -3,14 +3,14 @@ import axios from "axios";
 import "../../styles/pages/invest-rev/InvestRevRequest.css";
 
 /** 최신 시트(행 배열) — HistoryPage와 동일 소스 */
-const LATEST_SHEET_URL = "http://127.0.0.1:8080/api/sap-his-data/test";
+const LATEST_SHEET_URL = "http://127.0.0.1:8080/pinvest/sap-his-data/test";
 
 /**
  * 변경 요청 저장 API (백엔드 구현 시 맞춰 조정)
  * 기대 본문: rowKey, columnKey, valueBefore, valueAfter, requestedBy, comment?, clientRequestId?
  */
 const CHANGE_REQUEST_POST_URL =
-  "http://127.0.0.1:8080/api/invest-rev/change-requests";
+  "http://127.0.0.1:8080/pinvest/invest-rev/change-requests";
 
 const PRIMEKEY_COLUMN = "prime-key";
 
@@ -190,65 +190,65 @@ function InvestRevRequest() {
   };
 
   return (
-    <div className='invest-rev-sub-page invest-rev-request'>
-      <p className='invest-rev-sub-badge invest-rev-sub-badge--active'>
+    <div className="invest-rev-sub-page invest-rev-request">
+      <p className="invest-rev-sub-badge invest-rev-sub-badge--active">
         현재 탭: 변경 요청
       </p>
-      <p className='invest-rev-sub-desc' style={{ marginBottom: "1rem" }}>
+      <p className="invest-rev-sub-desc" style={{ marginBottom: "1rem" }}>
         DB에서 가져온 최신 시트 행을 고른 뒤, 특정 컬럼의 변경 후 값만 로컬에
         두었다가 &quot;변경 요청 제출&quot; 시 서버로 보냅니다. 승인·플래그(요청
         중 / 승인 완료)는 백엔드에서 처리합니다.
       </p>
 
-      <div className='invest-rev-request__toolbar'>
+      <div className="invest-rev-request__toolbar">
         <button
-          type='button'
-          className='invest-rev-request__btn invest-rev-request__btn--secondary'
+          type="button"
+          className="invest-rev-request__btn invest-rev-request__btn--secondary"
           onClick={fetchLatestSheet}
           disabled={loadingSheet}
         >
           {loadingSheet ? "불러오는 중…" : "최신 시트 다시 불러오기"}
         </button>
-        <p className='invest-rev-request__hint'>
+        <p className="invest-rev-request__hint">
           POST URL: <code>{CHANGE_REQUEST_POST_URL}</code>
         </p>
       </div>
 
       {sheetError && (
-        <div className='invest-rev-request__error' role='alert'>
+        <div className="invest-rev-request__error" role="alert">
           {sheetError}
         </div>
       )}
       {submitError && (
-        <div className='invest-rev-request__error' role='alert'>
+        <div className="invest-rev-request__error" role="alert">
           {submitError}
         </div>
       )}
       {submitMessage && (
-        <div className='invest-rev-request__success' role='status'>
+        <div className="invest-rev-request__success" role="status">
           {submitMessage}
         </div>
       )}
 
       {loadingSheet && rows.length === 0 && !sheetError ? (
-        <p className='invest-rev-request__loading'>
+        <p className="invest-rev-request__loading">
           데이터를 불러오는 중입니다…
         </p>
       ) : rows.length === 0 ? (
-        <p className='invest-rev-request__empty'>
+        <p className="invest-rev-request__empty">
           표시할 행이 없습니다. API 응답 형식을 확인하세요.
         </p>
       ) : (
-        <div className='invest-rev-request__layout'>
-          <div className='invest-rev-request__panel'>
-            <h2 className='invest-rev-request__panel-title'>
+        <div className="invest-rev-request__layout">
+          <div className="invest-rev-request__panel">
+            <h2 className="invest-rev-request__panel-title">
               최신 시트 (행 선택)
             </h2>
-            <div className='invest-rev-request__table-wrap'>
-              <table className='invest-rev-request__table'>
+            <div className="invest-rev-request__table-wrap">
+              <table className="invest-rev-request__table">
                 <thead>
                   <tr>
-                    <th aria-label='선택' />
+                    <th aria-label="선택" />
                     <th>상태</th>
                     {displayHeaders.slice(0, 8).map((h) => (
                       <th key={h}>{h}</th>
@@ -270,9 +270,9 @@ function InvestRevRequest() {
                       >
                         <td>
                           <input
-                            type='radio'
-                            name='invest-rev-row'
-                            className='invest-rev-request__row-radio'
+                            type="radio"
+                            name="invest-rev-row"
+                            className="invest-rev-request__row-radio"
                             checked={selected}
                             onChange={() => setSelectedIndex(idx)}
                             aria-label={`행 ${idx + 1} 선택`}
@@ -280,7 +280,7 @@ function InvestRevRequest() {
                         </td>
                         <td>
                           {pending ? (
-                            <span className='invest-rev-request__badge invest-rev-request__badge--pending'>
+                            <span className="invest-rev-request__badge invest-rev-request__badge--pending">
                               요청 중
                             </span>
                           ) : (
@@ -299,24 +299,24 @@ function InvestRevRequest() {
             </div>
           </div>
 
-          <div className='invest-rev-request__panel'>
-            <h2 className='invest-rev-request__panel-title'>
+          <div className="invest-rev-request__panel">
+            <h2 className="invest-rev-request__panel-title">
               변경 내용 (로컬 초안)
             </h2>
             {!selectedRow ? (
-              <p className='invest-rev-request__empty'>행을 선택하세요.</p>
+              <p className="invest-rev-request__empty">행을 선택하세요.</p>
             ) : (
               <>
-                <div className='invest-rev-request__form-group'>
+                <div className="invest-rev-request__form-group">
                   <label
-                    className='invest-rev-request__label'
-                    htmlFor='irr-col'
+                    className="invest-rev-request__label"
+                    htmlFor="irr-col"
                   >
                     변경할 컬럼
                   </label>
                   <select
-                    id='irr-col'
-                    className='invest-rev-request__select'
+                    id="irr-col"
+                    className="invest-rev-request__select"
                     value={columnKey}
                     onChange={(e) => setColumnKey(e.target.value)}
                   >
@@ -327,64 +327,64 @@ function InvestRevRequest() {
                     ))}
                   </select>
                 </div>
-                <div className='invest-rev-request__form-group'>
-                  <span className='invest-rev-request__label'>
+                <div className="invest-rev-request__form-group">
+                  <span className="invest-rev-request__label">
                     현재 값 (DB)
                   </span>
-                  <div className='invest-rev-request__readonly'>
+                  <div className="invest-rev-request__readonly">
                     {displayCell(valueBefore)}
                   </div>
                 </div>
-                <div className='invest-rev-request__form-group'>
+                <div className="invest-rev-request__form-group">
                   <label
-                    className='invest-rev-request__label'
-                    htmlFor='irr-after'
+                    className="invest-rev-request__label"
+                    htmlFor="irr-after"
                   >
                     변경 요청 값 (서버 전송 전까지 로컬만 수정)
                   </label>
                   <textarea
-                    id='irr-after'
-                    className='invest-rev-request__textarea'
+                    id="irr-after"
+                    className="invest-rev-request__textarea"
                     value={valueAfterDraft}
                     onChange={(e) => setValueAfterDraft(e.target.value)}
                     rows={4}
-                    placeholder='요청할 새 값을 입력하세요'
+                    placeholder="요청할 새 값을 입력하세요"
                   />
                 </div>
-                <div className='invest-rev-request__form-group'>
+                <div className="invest-rev-request__form-group">
                   <label
-                    className='invest-rev-request__label'
-                    htmlFor='irr-user'
+                    className="invest-rev-request__label"
+                    htmlFor="irr-user"
                   >
                     요청자 (user1)
                   </label>
                   <input
-                    id='irr-user'
-                    className='invest-rev-request__input'
+                    id="irr-user"
+                    className="invest-rev-request__input"
                     value={requestedBy}
                     onChange={(e) => setRequestedBy(e.target.value)}
-                    autoComplete='username'
+                    autoComplete="username"
                   />
                 </div>
-                <div className='invest-rev-request__form-group'>
+                <div className="invest-rev-request__form-group">
                   <label
-                    className='invest-rev-request__label'
-                    htmlFor='irr-note'
+                    className="invest-rev-request__label"
+                    htmlFor="irr-note"
                   >
                     비고 (선택)
                   </label>
                   <input
-                    id='irr-note'
-                    className='invest-rev-request__input'
+                    id="irr-note"
+                    className="invest-rev-request__input"
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder='담당자 참고용 메모'
+                    placeholder="담당자 참고용 메모"
                   />
                 </div>
 
                 <button
-                  type='button'
-                  className='invest-rev-request__btn invest-rev-request__btn--primary'
+                  type="button"
+                  className="invest-rev-request__btn invest-rev-request__btn--primary"
                   disabled={!canSubmit}
                   onClick={handleSubmit}
                 >
@@ -392,7 +392,7 @@ function InvestRevRequest() {
                 </button>
                 {!hasChange && columnKey && (
                   <p
-                    className='invest-rev-request__hint'
+                    className="invest-rev-request__hint"
                     style={{ marginTop: "0.75rem" }}
                   >
                     현재 값과 동일하면 제출할 수 없습니다.
@@ -400,11 +400,11 @@ function InvestRevRequest() {
                 )}
 
                 {payloadPreview && (
-                  <div className='invest-rev-request__preview'>
-                    <p className='invest-rev-request__preview-title'>
+                  <div className="invest-rev-request__preview">
+                    <p className="invest-rev-request__preview-title">
                       서버로 보낼 JSON 미리보기
                     </p>
-                    <pre className='invest-rev-request__preview-pre'>
+                    <pre className="invest-rev-request__preview-pre">
                       {JSON.stringify(
                         {
                           rowKey: payloadPreview.rowKey,

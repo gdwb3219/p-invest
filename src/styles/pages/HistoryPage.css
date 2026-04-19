@@ -1,26 +1,33 @@
+/* HistoryPage — InvestRevRequest / InvestRevPage 테마와 통일 */
 .history-page {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 1.5rem;
+  background-color: #ffffff;
+  color: #2a2d33;
 }
 
 .history-page h1 {
   text-align: center;
-  color: #000555;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #2a2d33;
   margin-bottom: 1rem;
 }
 
 .history-page > p {
   text-align: center;
-  color: #666;
+  color: #5c6370;
+  font-size: 0.95rem;
   margin-bottom: 2rem;
 }
 
 .history-content {
-  background: #fff;
-  border-radius: 8px;
-  padding: 1.5rem;
-  border: 1px solid #e0e0e0;
+  background: #fafbfc;
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  border: 1px solid #e8eaef;
   min-height: 200px;
 }
 
@@ -29,57 +36,61 @@
 }
 
 .history-refresh-btn {
-  background-color: #000555;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 0.9rem;
+  border: 1px solid rgba(90, 111, 214, 0.5);
+  background: linear-gradient(135deg, #6f8cff, #5a6fd6);
+  color: #fff;
+  transition: filter 0.2s, opacity 0.2s;
 }
 
 .history-refresh-btn:hover:not(:disabled) {
-  background-color: #535bf2;
+  filter: brightness(1.05);
 }
 
 .history-refresh-btn:disabled {
-  background-color: #ccc;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .history-error {
-  background: #fee;
-  color: #c33;
-  padding: 1rem;
-  border-radius: 6px;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 0.875rem;
   margin-bottom: 1rem;
-  border: 1px solid #fcc;
 }
 
 .history-loading,
 .history-empty {
   text-align: center;
   padding: 2rem;
-  color: #666;
+  color: #6b7280;
+  font-size: 0.9rem;
 }
 
 .history-table-wrapper {
   overflow-x: auto;
   overflow-y: auto;
-  max-height: 60vh;
-  border-radius: 6px;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  max-height: min(60vh, 640px);
+  border-radius: 10px;
+  border: 1px solid #e8eaef;
+  background: #fff;
 }
 
 .history-table {
   width: max-content;
   table-layout: auto;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 12px;
+  border-collapse: collapse;
+  font-size: 0.8rem;
   background: #fff;
 }
+
 .history-table.history-table--fixed {
   table-layout: fixed;
   width: auto;
@@ -89,16 +100,17 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background-color: #000555;
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #f3f4f7;
+  color: #374151;
+  box-shadow: 0 1px 0 #e8eaef;
 }
 
 .history-table th {
-  padding: 0.4rem 0.5rem;
+  padding: 0.45rem 0.55rem;
   text-align: left;
-  font-weight: 500;
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #eef0f4;
   white-space: nowrap;
 }
 
@@ -113,12 +125,13 @@
   width: 2.5rem;
   text-align: center;
   font-weight: 600;
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 2px 0 4px rgba(42, 45, 51, 0.06);
 }
 
 .history-table thead .history-row-num {
-  background-color: #000555;
+  background: #f3f4f7;
   z-index: 11;
+  color: #374151;
 }
 
 .history-table tbody .history-row-num {
@@ -127,12 +140,12 @@
 }
 
 .history-table tbody tr:hover .history-row-num {
-  background-color: #f5f5f5;
+  background-color: #f9fafb;
 }
 
 .history-table td {
-  padding: 0.3rem 0.5rem;
-  border-bottom: 1px solid #e8e8e8;
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid #eef0f4;
   white-space: nowrap;
 }
 
@@ -141,7 +154,7 @@
 }
 
 .history-table tbody tr:hover {
-  background-color: #f5f5f5;
+  background-color: #f9fafb;
 }
 
 .history-table tbody tr.history-accordion-row {
@@ -153,11 +166,11 @@
 }
 
 .history-table tbody tr.history-row-selected {
-  background-color: rgba(0, 5, 85, 0.12);
+  background-color: rgba(111, 140, 255, 0.12);
 }
 
 .history-table tbody tr.history-row-selected:hover {
-  background-color: rgba(0, 5, 85, 0.18);
+  background-color: rgba(111, 140, 255, 0.18);
 }
 
 .history-table tbody tr:last-child td {
@@ -169,14 +182,16 @@
 .history-td-expand {
   min-width: 3rem;
 }
+
 .history-expand-icon {
   display: inline-block;
   margin-right: 0.35rem;
   font-size: 0.65rem;
   vertical-align: 0.05em;
-  color: #666;
+  color: #6b7280;
   transition: transform 0.2s ease;
 }
+
 .history-expand-icon--open {
   transform: rotate(90deg);
 }
@@ -185,17 +200,20 @@
 .history-accordion-row {
   cursor: default;
 }
+
 .history-accordion-td {
   padding: 0 !important;
-  border-bottom: 1px solid #e8e8e8;
+  border-bottom: 1px solid #eef0f4;
   vertical-align: top;
   overflow: hidden;
 }
+
 .history-accordion-row:last-child .history-accordion-td {
   border-bottom: none;
 }
+
 .history-row-selected + .history-accordion-row .history-accordion-td {
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid #e8eaef;
 }
 
 /* grid 0fr → 1fr 로 높이 슬라이드 */
@@ -204,9 +222,11 @@
   grid-template-rows: 0fr;
   transition: grid-template-rows 0.35s ease-out;
 }
+
 .history-accordion-cell--open {
   grid-template-rows: 1fr;
 }
+
 .history-accordion-inner {
   min-height: 0;
   overflow: hidden;
@@ -214,20 +234,25 @@
 
 /* 셀 안 메시지 */
 .history-accordion-message {
-  padding: 0.6rem 0.75rem;
-  font-size: 0.95em;
-  color: #666;
-  background-color: #f8f9fc;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.875rem;
+  color: #5c6370;
+  background-color: #fafbfc;
+  border-top: 1px solid #e8eaef;
 }
+
 .history-accordion-message--loading,
 .history-accordion-message--empty {
   font-style: italic;
   text-align: center;
+  color: #6b7280;
 }
+
 .history-accordion-message--error {
-  color: #c33;
+  color: #b91c1c;
   font-style: normal;
   text-align: center;
+  background: #fef2f2;
 }
 
 /* 셀 안 이력 테이블 */
@@ -235,20 +260,23 @@
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  font-size: 12px;
-  background-color: #f8f9fc;
+  font-size: 0.8rem;
+  background-color: #fafbfc;
 }
+
 .history-accordion-table td {
-  padding: 0.35rem 0.5rem;
-  border-bottom: 1px solid #e8e8e8;
+  padding: 0.4rem 0.55rem;
+  border-bottom: 1px solid #eef0f4;
   white-space: nowrap;
 }
+
 .history-accordion-table .history-accordion-td-num {
   text-align: center;
-  font-weight: 500;
-  color: #555;
-  background-color: #eef0f5;
+  font-weight: 600;
+  color: #4b5563;
+  background-color: #f3f4f7;
 }
+
 .history-accordion-table tbody tr:last-child td {
   border-bottom: none;
 }

@@ -9,7 +9,10 @@ import InvestRevPage from "../pages/InvestRevPage";
 import InvestRevList from "../pages/invest-rev/InvestRevList";
 import InvestRevRequest from "../pages/invest-rev/InvestRevRequest";
 import InvestRevHistory from "../pages/invest-rev/InvestRevHistory";
+import InvestCommitteeChangePage from "../pages/invest-rev/InvestCommitteeChangePage";
 import InvestCommitteeChange from "../pages/invest-rev/InvestCommitteeChange";
+import CommitteeChangeRequest from "../pages/invest-rev/CommitteeChangeRequest";
+import CommitteeChangeHistory from "../pages/invest-rev/CommitteeChangeHistory";
 import NavExamplePlaceholder from "../pages/invest-rev/NavExamplePlaceholder";
 
 function AppRoutes() {
@@ -26,8 +29,13 @@ function AppRoutes() {
       <Route path={ROUTES.SETTINGS} element={<SettingPage />} />
       <Route
         path={ROUTES.INVEST_REV_COMMITTEE_CHANGE}
-        element={<InvestCommitteeChange />}
-      />
+        element={<InvestCommitteeChangePage />}
+      >
+        <Route index element={<Navigate to="main" replace />} />
+        <Route path="main" element={<InvestCommitteeChange />} />
+        <Route path="requests" element={<CommitteeChangeRequest />} />
+        <Route path="history" element={<CommitteeChangeHistory />} />
+      </Route>
       <Route
         path={ROUTES.INVEST_REV_EXAMPLE_2}
         element={<NavExamplePlaceholder variant={2} />}
