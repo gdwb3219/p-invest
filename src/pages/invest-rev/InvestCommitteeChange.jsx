@@ -1,7 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import axios from "axios";
+import { useBeforeUnload, useNavigate } from "react-router-dom";
 import "../../styles/pages/invest-rev/InvestRevRequest.css";
 import "../../styles/pages/invest-rev/InvestCommitteeChange.css";
+import CancelModal from "./modal/CancelModal.jsx";
+import ClearStagingModal from "./modal/ClearStagingModal.jsx";
+import BulkChangeRequestModal from "./modal/BulkChangeRequestModal.jsx";
+
+const HISTORY_GUARD_STATE = { __iccStagingGuard: 1 };
 
 const LATEST_SHEET_URL = "http://127.0.0.1:8080/pinvest/sap-his-data/test";
 
@@ -55,12 +67,20 @@ function buildAfterData(beforeRow, columnKey, newValue) {
 }
 
 function InvestCommitteeChange() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [loadingSheet, setLoadingSheet] = useState(false);
   const [sheetError, setSheetError] = useState(null);
 
   /** target_id → 스테이징 항목 */
   const [stagedMap, setStagedMap] = useState(() => new Map());
+  const hasStaging = stagedMap.size > 0;
+  const [guardModal, setGuardModal] = useState(null); // null | "reload" | "back"
+  const [clearStagingModalOpen, setClearStagingModalOpen] = useState(false);
+  const [bulkSubmitModalOpen, setBulkSubmitModalOpen] = useState(false);
+  const historyGuardActiveRef = useRef(false);
+  const skipPopGuardRef = useRef(false);
+  const pendingRouterBackRef = useRef(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalRowIndex, setModalRowIndex] = useState(null);
@@ -97,6 +117,55 @@ function InvestCommitteeChange() {
   useEffect(() => {
     fetchLatestSheet();
   }, [fetchLatestSheet]);
+
+  useBeforeUnload(
+    useCallback(
+      (event) => {
+        if (!hasStaging) return;
+        event.preventDefault();
+        event.returnValue = "";
+      },
+      [hasStaging],
+    ),
+  );
+
+  useEffect(() => {
+    if (!hasStaging) {
+      if (
+        historyGuardActiveRef.current &&
+        window.history.state &&
+        typeof window.history.state === "object" &&
+        window.history.state.__iccStagingGuard === 1
+      ) {
+        historyGuardActiveRef.current = false;
+        skipPopGuardRef.current = true;
+        window.history.back();
+        skipPopGuardRef.current = false;
+      }
+      return undefined;
+    }
+
+    if (!historyGuardActiveRef.current) {
+      window.history.pushState(HISTORY_GUARD_STATE, "");
+      historyGuardActiveRef.current = true;
+    }
+
+    const onPopState = () => {
+      if (skipPopGuardRef.current) return;
+      setGuardModal("back");
+      window.history.pushState(HISTORY_GUARD_STATE, "");
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [hasStaging]);
+
+  useEffect(() => {
+    if (!pendingRouterBackRef.current) return;
+    if (stagedMap.size > 0) return;
+    pendingRouterBackRef.current = false;
+    navigate(-1);
+  }, [stagedMap.size, navigate]);
 
   const headers = useMemo(() => {
     if (rows.length === 0) return [];
@@ -221,9 +290,51 @@ function InvestCommitteeChange() {
     setStagedMap(() => new Map());
   }, []);
 
+  const requestSheetReload = useCallback(() => {
+    if (stagedMap.size > 0) {
+      setGuardModal("reload");
+      return;
+    }
+    fetchLatestSheet();
+  }, [stagedMap.size, fetchLatestSheet]);
+
+  const confirmReloadAfterWarning = useCallback(() => {
+    setGuardModal(null);
+    clearStaging();
+    fetchLatestSheet();
+  }, [clearStaging, fetchLatestSheet]);
+
+  const confirmBackAfterWarning = useCallback(() => {
+    setGuardModal(null);
+    pendingRouterBackRef.current = true;
+    clearStaging();
+  }, [clearStaging]);
+
+  const dismissGuardModal = useCallback(() => {
+    setGuardModal(null);
+  }, []);
+
+  const requestClearStaging = useCallback(() => {
+    if (stagedMap.size === 0 || submitting) return;
+    setClearStagingModalOpen(true);
+  }, [stagedMap.size, submitting]);
+
+  const dismissClearStagingModal = useCallback(() => {
+    setClearStagingModalOpen(false);
+  }, []);
+
+  const confirmClearStaging = useCallback(() => {
+    setClearStagingModalOpen(false);
+    clearStaging();
+  }, [clearStaging]);
+
+  const dismissBulkSubmitModal = useCallback(() => {
+    setBulkSubmitModalOpen(false);
+  }, []);
+
   const canBulkSubmit = stagedMap.size > 0 && !submitting;
 
-  const handleBulkSubmit = async () => {
+  const performBulkSubmit = useCallback(async () => {
     if (!canBulkSubmit) return;
     setSubmitting(true);
     setSubmitError(null);
@@ -259,7 +370,17 @@ function InvestCommitteeChange() {
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [canBulkSubmit, stagedMap, clearStaging, fetchLatestSheet]);
+
+  const requestBulkSubmit = useCallback(() => {
+    if (!canBulkSubmit) return;
+    setBulkSubmitModalOpen(true);
+  }, [canBulkSubmit]);
+
+  const confirmBulkSubmit = useCallback(() => {
+    setBulkSubmitModalOpen(false);
+    void performBulkSubmit();
+  }, [performBulkSubmit]);
 
   return (
     <>
@@ -277,7 +398,7 @@ function InvestCommitteeChange() {
             <button
               type="button"
               className="invest-rev-request__btn invest-rev-request__btn--secondary"
-              onClick={fetchLatestSheet}
+              onClick={requestSheetReload}
               disabled={loadingSheet}
             >
               {loadingSheet ? "불러오는 중…" : "최신 데이터 다시 불러오기"}
@@ -442,7 +563,7 @@ function InvestCommitteeChange() {
                   type="button"
                   className="invest-rev-request__btn invest-rev-request__btn--primary"
                   disabled={!canBulkSubmit}
-                  onClick={handleBulkSubmit}
+                  onClick={requestBulkSubmit}
                 >
                   {submitting ? "전송 중…" : "변경 요청"}
                 </button>
@@ -450,7 +571,7 @@ function InvestCommitteeChange() {
                   type="button"
                   className="invest-rev-request__btn invest-rev-request__btn--secondary"
                   disabled={stagedMap.size === 0 || submitting}
-                  onClick={clearStaging}
+                  onClick={requestClearStaging}
                 >
                   임시 보관 비우기
                 </button>
@@ -572,6 +693,36 @@ function InvestCommitteeChange() {
           </div>
         </div>
       ) : null}
+
+      <CancelModal
+        open={guardModal === "reload"}
+        title="최신 데이터를 다시 불러올까요?"
+        message="최신 SAP 이력을 다시 불러오면 지금 임시 보관 중인 변경 목록이 모두 삭제됩니다. 계속 진행할까요?"
+        cancelLabel="머무르기"
+        confirmLabel="다시 불러오기"
+        onCancel={dismissGuardModal}
+        onConfirm={confirmReloadAfterWarning}
+      />
+      <CancelModal
+        open={guardModal === "back"}
+        title="이 페이지를 벗어날까요?"
+        message="뒤로 가기를 완료하면 이 화면의 임시 보관 목록이 모두 삭제됩니다. 계속 진행할까요?"
+        cancelLabel="머무르기"
+        confirmLabel="뒤로 가기"
+        onCancel={dismissGuardModal}
+        onConfirm={confirmBackAfterWarning}
+      />
+
+      <ClearStagingModal
+        open={clearStagingModalOpen}
+        onCancel={dismissClearStagingModal}
+        onConfirm={confirmClearStaging}
+      />
+      <BulkChangeRequestModal
+        open={bulkSubmitModalOpen}
+        onCancel={dismissBulkSubmitModal}
+        onConfirm={confirmBulkSubmit}
+      />
     </>
   );
 }

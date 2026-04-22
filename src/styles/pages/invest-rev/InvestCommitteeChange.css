@@ -103,3 +103,48 @@
   color: #b91c1c;
   font-size: 0.8rem;
 }
+
+.icc-cancel-modal-backdrop {
+  z-index: 2100;
+}
+
+.icc-cancel-modal .icc-modal-title {
+  color: #b45309;
+}
+
+.icc-cancel-modal__body {
+  margin: 0 0 0.25rem 0;
+}
+
+.icc-cancel-modal__warn {
+  margin: 0 0 0.65rem 0;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.icc-cancel-modal__message {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+.icc-confirm-modal-backdrop {
+  z-index: 2100;
+}
+
+.icc-confirm-modal .icc-modal-title {
+  color: #1f2937;
+}
+
+.icc-confirm-modal__message {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: #4b5563;
+}
