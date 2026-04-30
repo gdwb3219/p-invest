@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useEffect, useRef, useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   ROUTES,
   ROUTE_META,
@@ -8,17 +8,18 @@ import {
   isInvestRevLegacySubActive,
   isChangeRequestNavSubActive,
   isCommitteeChangeNavActive,
-} from "../constants/routes";
+} from '../constants/routes';
 import {
   FaTableColumns,
   FaFlask,
   FaClockRotateLeft,
   FaChartLine,
   FaSliders,
+  FaUsers,
   FaPenToSquare,
   FaChevronDown,
-} from "react-icons/fa6";
-import "../styles/components/NavigationBar.css";
+} from 'react-icons/fa6';
+import '../styles/components/NavigationBar.css';
 
 const ICONS = {
   [ROUTES.COMPARE]: <FaTableColumns />,
@@ -26,6 +27,7 @@ const ICONS = {
   [ROUTES.HISTORY]: <FaClockRotateLeft />,
   [ROUTES.DASHBOARD]: <FaChartLine />,
   [ROUTES.SETTINGS]: <FaSliders />,
+  [ROUTES.COMMITTEE]: <FaUsers />,
 };
 
 function NavigationBar() {
@@ -34,7 +36,7 @@ function NavigationBar() {
   const prevPathRef = useRef(location.pathname);
 
   const [changeRequestOpen, setChangeRequestOpen] = useState(() =>
-    location.pathname.startsWith(prefix)
+    location.pathname.startsWith(prefix),
   );
 
   useEffect(() => {
@@ -47,48 +49,48 @@ function NavigationBar() {
   }, [location.pathname, prefix]);
 
   const changeRequestMainActive = isChangeRequestNavSubActive(
-    location.pathname
+    location.pathname,
   );
 
   return (
-    <nav className="navigation-bar">
-      <div className="nav-header">
+    <nav className='navigation-bar'>
+      <div className='nav-header'>
         <h2>P-Invest System</h2>
       </div>
-      <ul className="nav-menu">
+      <ul className='nav-menu'>
         {Object.entries(ROUTE_META).map(([path, meta]) => (
           <li key={path}>
             <NavLink
               to={path}
               className={({ isActive }) =>
-                isActive ? "nav-link active" : "nav-link"
+                isActive ? 'nav-link active' : 'nav-link'
               }
             >
-              <span className="nav-icon">{ICONS[path]}</span>
-              <span className="nav-label">{meta.label}</span>
+              <span className='nav-icon'>{ICONS[path]}</span>
+              <span className='nav-label'>{meta.label}</span>
             </NavLink>
           </li>
         ))}
-        <li className="nav-menu__group">
+        <li className='nav-menu__group'>
           <button
-            type="button"
+            type='button'
             className={
               changeRequestMainActive
-                ? "nav-group-toggle active"
-                : "nav-group-toggle"
+                ? 'nav-group-toggle active'
+                : 'nav-group-toggle'
             }
             aria-expanded={changeRequestOpen}
             onClick={() => setChangeRequestOpen((open) => !open)}
           >
-            <span className="nav-icon">
+            <span className='nav-icon'>
               <FaPenToSquare />
             </span>
-            <span className="nav-label">{CHANGE_REQUEST_NAV_GROUP.label}</span>
+            <span className='nav-label'>{CHANGE_REQUEST_NAV_GROUP.label}</span>
             <span
               className={
                 changeRequestOpen
-                  ? "nav-chevron nav-chevron--open"
-                  : "nav-chevron"
+                  ? 'nav-chevron nav-chevron--open'
+                  : 'nav-chevron'
               }
               aria-hidden
             >
@@ -96,7 +98,7 @@ function NavigationBar() {
             </span>
           </button>
           {changeRequestOpen ? (
-            <ul className="nav-sub-menu">
+            <ul className='nav-sub-menu'>
               {CHANGE_REQUEST_NAV_GROUP.children.map(({ path, label }) => {
                 const legacy = path === ROUTES.INVEST_REV;
                 const committee = path === ROUTES.INVEST_REV_COMMITTEE_CHANGE;
@@ -106,15 +108,17 @@ function NavigationBar() {
                       to={path}
                       end
                       className={({ isActive }) =>
-                        (legacy
-                          ? isActive ||
-                            isInvestRevLegacySubActive(location.pathname)
-                          : committee
+                        (
+                          legacy
                             ? isActive ||
-                              isCommitteeChangeNavActive(location.pathname)
-                            : isActive)
-                          ? "nav-sub-link active"
-                          : "nav-sub-link"
+                              isInvestRevLegacySubActive(location.pathname)
+                            : committee
+                              ? isActive ||
+                                isCommitteeChangeNavActive(location.pathname)
+                              : isActive
+                        )
+                          ? 'nav-sub-link active'
+                          : 'nav-sub-link'
                       }
                     >
                       {label}

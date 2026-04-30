@@ -18,7 +18,10 @@
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
 }
 
 .invest-rev-request__btn--secondary {
@@ -90,6 +93,7 @@
   border: 1px solid #e8eaef;
   border-radius: 10px;
   padding: 1rem 1.1rem;
+  width: 1600px;
 }
 
 .invest-rev-request__panel-title {

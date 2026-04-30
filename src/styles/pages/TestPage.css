@@ -11,7 +11,7 @@ body.test-page-scroll-snap {
 }
 
 .test-page {
-  max-width: 1200px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 1.5rem;
   background-color: #ffffff;
@@ -66,7 +66,10 @@ body.test-page-scroll-snap {
   user-select: none;
   position: relative;
   top: 1px;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
 }
 
 .sheet-tab:hover {
@@ -105,7 +108,9 @@ body.test-page-scroll-snap {
   line-height: 1;
   cursor: pointer;
   border-radius: 4px;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .sheet-tab-close:hover {
@@ -129,7 +134,10 @@ body.test-page-scroll-snap {
   line-height: 1;
   cursor: pointer;
   border-radius: 8px;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .sheet-tab-add:hover {
@@ -167,7 +175,9 @@ body.test-page-scroll-snap {
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 600;
-  transition: filter 0.2s, opacity 0.2s;
+  transition:
+    filter 0.2s,
+    opacity 0.2s;
   height: fit-content;
   white-space: nowrap;
 }

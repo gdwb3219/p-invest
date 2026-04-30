@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { useApiUrl } from '../../contexts/ApiUrlContext';
 import '../../styles/pages/invest-rev/InvestRevRequest.css';
 import '../../styles/pages/invest-rev/CommitteeChangeRequest.css';
 
@@ -7,12 +8,11 @@ import '../../styles/pages/invest-rev/CommitteeChangeRequest.css';
  * 투심위 일괄 변경 요청 목록 API — 백엔드 모델에 맞게 URL·필드명을 조정하세요.
  * 기대: GET 시 변경 요청 문서 배열(또는 { results: [] }), 항목에 승인 플래그·승인자 필드.
  */
-const CHANGE_REQUESTS_LIST_URL =
-  'http://127.0.0.1:8080/pinvest/invest-change/requests-list/';
+const CHANGE_REQUESTS_LIST_PATH = '/invest-change/requests-list/';
 
-function approveRequestUrl(requestId) {
+function approveRequestUrl(API_URL, requestId) {
   const id = encodeURIComponent(String(requestId));
-  return `http://127.0.0.1:8080/pinvest/invest-change/requests/${id}/approve/`;
+  return `${API_URL}/invest-change/requests/${id}/approve/`;
 }
 
 function normalizeListPayload(data) {
@@ -73,6 +73,9 @@ function displayCell(v) {
 }
 
 function CommitteeChangeRequest() {
+  const { API_URL } = useApiUrl();
+  const CHANGE_REQUESTS_LIST_URL = `${API_URL}${CHANGE_REQUESTS_LIST_PATH}`;
+
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -100,7 +103,7 @@ function CommitteeChangeRequest() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [CHANGE_REQUESTS_LIST_URL]);
 
   useEffect(() => {
     void fetchRequests();
@@ -137,7 +140,7 @@ function CommitteeChangeRequest() {
          * Mongo 등에서 한글 필드만 쓰는 경우 본문을 { 승인: true, 승인자: name } 형태로 바꾸면 됩니다.
          */
         await axios.post(
-          approveRequestUrl(id),
+          approveRequestUrl(API_URL, id),
           { approved: true, approved_by: name },
           { headers: { 'Content-Type': 'application/json' } },
         );
@@ -155,7 +158,7 @@ function CommitteeChangeRequest() {
         setApprovingId(null);
       }
     },
-    [approver, fetchRequests],
+    [approver, fetchRequests, API_URL],
   );
 
   return (

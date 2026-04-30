@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useSessionStorage } from '../../hooks/useCustomHooks';
+import { useApiUrl } from '../../contexts/ApiUrlContext';
 import '../../styles/pages/invest-rev/InvestRevRequest.css';
 import '../../styles/pages/invest-rev/InvestCommitteeChange.css';
 import CancelModal from './modal/CancelModal.jsx';
@@ -10,11 +11,8 @@ import BulkChangeRequestModal from './modal/BulkChangeRequestModal.jsx';
 
 const HISTORY_GUARD_STATE = { __iccStagingGuard: 1 };
 
-const LATEST_SHEET_URL = 'http://127.0.0.1:8080/pinvest/sap-his-data/test';
-
-/** BulkCreateChangeRequestsView — Django URL에 맞게 수정하세요. */
-const BULK_CHANGE_REQUESTS_URL =
-  'http://127.0.0.1:8080/pinvest/invest-change/bulk-requests/';
+const LATEST_SHEET_PATH = '/sap-his-data/test';
+const BULK_CHANGE_REQUESTS_PATH = '/invest-change/bulk-requests/';
 
 /** 백엔드 Mongo / 논리 테이블명에 맞게 조정 */
 const TARGET_TABLE = 'sap_his_data';
@@ -88,6 +86,9 @@ function buildAfterData(beforeRow, columnKey, newValue) {
 /** 주요 상태 관리 및 데이터 흐름 제어 */
 // Component 시작점
 function InvestCommitteeChange() {
+  const { API_URL } = useApiUrl();
+  const LATEST_SHEET_URL = `${API_URL}${LATEST_SHEET_PATH}`;
+  const BULK_CHANGE_REQUESTS_URL = `${API_URL}${BULK_CHANGE_REQUESTS_PATH}`;
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [loadingSheet, setLoadingSheet] = useState(false);
@@ -157,7 +158,7 @@ function InvestCommitteeChange() {
     } finally {
       setLoadingSheet(false);
     }
-  }, []);
+  }, [LATEST_SHEET_URL]);
 
   // 최신 시트 로드 효과
   useEffect(() => {
@@ -419,7 +420,13 @@ function InvestCommitteeChange() {
     } finally {
       setSubmitting(false);
     }
-  }, [canBulkSubmit, stagedMap, clearStaging, fetchLatestSheet]);
+  }, [
+    canBulkSubmit,
+    stagedMap,
+    clearStaging,
+    fetchLatestSheet,
+    BULK_CHANGE_REQUESTS_URL,
+  ]);
 
   const requestBulkSubmit = useCallback(() => {
     if (!canBulkSubmit) return;

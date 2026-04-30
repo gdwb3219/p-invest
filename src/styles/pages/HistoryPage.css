@@ -1,6 +1,6 @@
 /* HistoryPage — InvestRevRequest / InvestRevPage 테마와 통일 */
 .history-page {
-  max-width: 1200px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 1.5rem;
   background-color: #ffffff;
@@ -44,7 +44,9 @@
   border: 1px solid rgba(90, 111, 214, 0.5);
   background: linear-gradient(135deg, #6f8cff, #5a6fd6);
   color: #fff;
-  transition: filter 0.2s, opacity 0.2s;
+  transition:
+    filter 0.2s,
+    opacity 0.2s;
 }
 
 .history-refresh-btn:hover:not(:disabled) {

@@ -1,11 +1,17 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-import "../styles/pages/SettingPage.css";
+import { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import { useApiUrl } from '../contexts/ApiUrlContext';
+import '../styles/pages/SettingPage.css';
 
 function SettingPage() {
+  const { API_URL } = useApiUrl();
+  const REVISIONS_LIST_URL = `${API_URL}/imports/rev-list/`;
+  const IMPORTS_DELETE_URL = `${API_URL}/imports/delete/`;
+  const SAP_HIS_DELETE_URL = `${API_URL}/sap-his-data/delete/`;
+  const SAP_HIS_TEST_URL = `${API_URL}/sap-his-data/test`;
+
   const [revisions, setRevisions] = useState([]);
-  const [selectedImportId, setSelectedImportId] = useState("");
-  const [selectedVersion, setSelectedVersion] = useState("");
+  const [selectedVersion, setSelectedVersion] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingRevisions, setLoadingRevisions] = useState(false);
   const [error, setError] = useState(null);
@@ -13,29 +19,29 @@ function SettingPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // revision 목록 가져오기
-  useEffect(() => {
-    fetchRevisions();
-  }, []);
-
-  const fetchRevisions = async () => {
+  const fetchRevisions = useCallback(async () => {
     setLoadingRevisions(true);
     setError(null);
     try {
       const response = await axios.get(
-        "http://127.0.0.1:8080/pinvest/imports/rev-list/",
+        REVISIONS_LIST_URL,
       );
       const revisionsData = Array.isArray(response.data)
         ? response.data
         : response.data?.data || response.data?.results || [];
-      console.log("Revisions Data:", revisionsData);
+      console.log('Revisions Data:', revisionsData);
       setRevisions(revisionsData);
     } catch (err) {
-      console.error("Revision 목록 가져오기 오류:", err);
-      setError("Revision 목록을 불러오는 중 오류가 발생했습니다.");
+      console.error('Revision 목록 가져오기 오류:', err);
+      setError('Revision 목록을 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoadingRevisions(false);
     }
-  };
+  }, [REVISIONS_LIST_URL]);
+
+  useEffect(() => {
+    void fetchRevisions();
+  }, [fetchRevisions]);
 
   const handleImportIdChange = (e) => {
     setSelectedVersion(e.target.value);
@@ -46,7 +52,7 @@ function SettingPage() {
 
   const handleDelete = async () => {
     if (!selectedVersion) {
-      setError("삭제할 import_id를 선택해주세요.");
+      setError('삭제할 import_id를 선택해주세요.');
       return;
     }
 
@@ -62,31 +68,31 @@ function SettingPage() {
     try {
       // imports 콜렉션과 sap_his_data 콜렉션에서 삭제
       const [importsResponse, sapHisResponse] = await Promise.all([
-        axios.delete(`http://127.0.0.1:8080/pinvest/imports/delete/`, {
+        axios.delete(IMPORTS_DELETE_URL, {
           params: { import_id: selectedVersion },
         }),
-        axios.delete(`http://127.0.0.1:8080/pinvest/sap-his-data/delete/`, {
+        axios.delete(SAP_HIS_DELETE_URL, {
           params: { import_id: selectedVersion },
         }),
       ]);
 
-      console.log("Imports 삭제 응답:", importsResponse.data);
-      console.log("SAP HIS Data 삭제 응답:", sapHisResponse.data);
+      console.log('Imports 삭제 응답:', importsResponse.data);
+      console.log('SAP HIS Data 삭제 응답:', sapHisResponse.data);
 
       setSuccess(
         `version: ${selectedVersion}에 해당하는 데이터가 성공적으로 삭제되었습니다.`,
       );
-      setSelectedVersion("");
+      setSelectedVersion('');
       setConfirmDelete(false);
 
       // 목록 새로고침
       fetchRevisions();
     } catch (err) {
-      console.error("데이터 삭제 오류:", err);
+      console.error('데이터 삭제 오류:', err);
       const errorMessage =
         err.response?.data?.message ||
         err.message ||
-        "데이터 삭제 중 오류가 발생했습니다.";
+        '데이터 삭제 중 오류가 발생했습니다.';
       setError(`삭제 실패: ${errorMessage}`);
       setConfirmDelete(false);
     } finally {
@@ -123,30 +129,30 @@ function SettingPage() {
   // Test Area
   const handleTest = async () => {
     const response = await axios.get(
-      "http://127.0.0.1:8080/pinvest/sap-his-data/test",
+      SAP_HIS_TEST_URL,
     );
-    console.log(response.data, "TEST Data");
+    console.log(response.data, 'TEST Data');
   };
 
   return (
-    <div className="page-container">
-      <div className="setting-page">
+    <div className='page-container'>
+      <div className='setting-page'>
         <h1>설정</h1>
         <p>import_id를 선택하여 해당 revision 데이터를 삭제할 수 있습니다.</p>
 
-        <div className="setting-content">
-          <div className="setting-section">
+        <div className='setting-content'>
+          <div className='setting-section'>
             <h2>데이터 삭제</h2>
-            <div className="form-group">
-              <label htmlFor="import-id-select">Import ID 선택:</label>
+            <div className='form-group'>
+              <label htmlFor='import-id-select'>Import ID 선택:</label>
               <select
-                id="import-id-select"
+                id='import-id-select'
                 value={selectedVersion}
                 onChange={handleImportIdChange}
-                className="import-select"
+                className='import-select'
                 disabled={loadingRevisions || loading}
               >
-                <option value="">-- 선택하세요 --</option>
+                <option value=''>-- 선택하세요 --</option>
                 {revisions.map((revision) => {
                   const importId = revision.import_id || revision.importId;
                   if (!importId) return null;
@@ -160,20 +166,20 @@ function SettingPage() {
             </div>
 
             {selectedRevision && (
-              <div className="selected-info">
+              <div className='selected-info'>
                 <h3>선택된 Revision 정보</h3>
-                <div className="info-grid">
-                  <div className="info-item">
-                    <span className="info-label">Import ID:</span>
-                    <span className="info-value">{selectedVersion}</span>
+                <div className='info-grid'>
+                  <div className='info-item'>
+                    <span className='info-label'>Import ID:</span>
+                    <span className='info-value'>{selectedVersion}</span>
                   </div>
-                  <div className="info-item">
-                    <span className="info-label">Revision Name:</span>
-                    <span className="info-value">
+                  <div className='info-item'>
+                    <span className='info-label'>Revision Name:</span>
+                    <span className='info-value'>
                       {selectedRevision.name ||
                         selectedRevision.revision_name ||
                         selectedRevision.revision ||
-                        "N/A"}
+                        'N/A'}
                     </span>
                   </div>
                 </div>
@@ -181,27 +187,27 @@ function SettingPage() {
             )}
 
             {loadingRevisions && (
-              <div className="loading-message">
+              <div className='loading-message'>
                 Revision 목록을 불러오는 중...
               </div>
             )}
 
-            {error && <div className="error-message">{error}</div>}
-            {success && <div className="success-message">{success}</div>}
+            {error && <div className='error-message'>{error}</div>}
+            {success && <div className='success-message'>{success}</div>}
 
             {selectedVersion && (
-              <div className="delete-section">
+              <div className='delete-section'>
                 {!confirmDelete ? (
                   <button
                     onClick={handleDelete}
-                    className="delete-btn"
+                    className='delete-btn'
                     disabled={loading || loadingRevisions}
                   >
-                    {loading ? "처리 중..." : "삭제"}
+                    {loading ? '처리 중...' : '삭제'}
                   </button>
                 ) : (
-                  <div className="confirm-delete">
-                    <div className="confirm-message">
+                  <div className='confirm-delete'>
+                    <div className='confirm-message'>
                       <p>
                         <strong>경고:</strong> 이 작업은 되돌릴 수 없습니다.
                       </p>
@@ -211,17 +217,17 @@ function SettingPage() {
                         삭제하시겠습니까?
                       </p>
                     </div>
-                    <div className="confirm-buttons">
+                    <div className='confirm-buttons'>
                       <button
                         onClick={handleDelete}
-                        className="confirm-btn"
+                        className='confirm-btn'
                         disabled={loading}
                       >
-                        {loading ? "삭제 중..." : "확인"}
+                        {loading ? '삭제 중...' : '확인'}
                       </button>
                       <button
                         onClick={handleCancel}
-                        className="cancel-btn"
+                        className='cancel-btn'
                         disabled={loading}
                       >
                         취소
