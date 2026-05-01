@@ -1,58 +1,28 @@
-export { default } from './Overview/CommitteeOverviewPage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
-import { useSessionStorage } from '../../hooks/useCustomHooks';
-import { useApiUrl } from '../../contexts/ApiUrlContext';
-import '../../styles/pages/invest-rev/InvestRevRequest.css';
+import { useSessionStorage } from '../../../hooks/useCustomHooks';
+import { useApiUrl } from '../../../contexts/ApiUrlContext';
+import '../../../styles/pages/invest-rev/InvestRevRequest.css';
+import CommitteeSourceTablePanel from './components/CommitteeSourceTablePanel';
+import CommitteeStagedTablePanel from './components/CommitteeStagedTablePanel';
+import CommitteeApproveModal from './components/CommitteeApproveModal';
+import CommitteeManualEntryModal from './components/CommitteeManualEntryModal';
+import CommitteeCsvUploadModal from './components/CommitteeCsvUploadModal';
+import {
+  COMMITTEE_CREATE_LIST_PATH,
+  COMMITTEE_APPROVAL_POST_PATH,
+  COMMITTEE_STAGE_SESSION_KEY,
+  normalizeRows,
+  getRowKey,
+  getPrimeKey,
+  newManualRowKey,
+  displayCell,
+  getOrderedHeaders,
+  buildCsvTemplate,
+  parseCsvText,
+} from './overviewUtils';
 
-const COMMITTEE_CREATE_LIST_PATH = '/committee/create-list/';
-const COMMITTEE_APPROVAL_POST_PATH = '/committee/create-list/';
-const COMMITTEE_STAGE_SESSION_KEY = 'p-invest:committee:overview-staging';
-const KEY_FIRST = ['구분0 (사업명)', '구분0 순번'];
-const APPROVE_REASON_COLUMNS = ['구분0 (사업명)', '구분0 순번', '투자사업명'];
-
-function normalizeRows(raw) {
-  const list = Array.isArray(raw) ? raw : (raw?.data ?? raw?.results ?? []);
-  return Array.isArray(list) ? list : [];
-}
-
-function getRowKey(row, index) {
-  const key =
-    row?.['prime-key'] ??
-    row?.prime_key ??
-    row?.id ??
-    row?._id ??
-    row?.target_id ??
-    index;
-  return String(key);
-}
-
-function getPrimeKey(row, fallback) {
-  const key = row?.['prime-key'] ?? row?.prime_key ?? fallback;
-  return String(key);
-}
-
-function newManualRowKey() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `manual-${crypto.randomUUID()}`;
-  }
-  return `manual-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-}
-
-function displayCell(v) {
-  if (v == null) return '';
-  if (typeof v === 'object') return JSON.stringify(v);
-  return String(v);
-}
-
-function getOrderedHeaders(headers) {
-  if (!headers || headers.length === 0) return headers || [];
-  const first = KEY_FIRST.filter((k) => headers.includes(k));
-  const rest = headers.filter((k) => !KEY_FIRST.includes(k));
-  return [...first, ...rest];
-}
-
-function CommitteeOverview() {
+function CommitteeOverviewPage() {
   const { API_URL } = useApiUrl();
   const COMMITTEE_CREATE_LIST_URL = `${API_URL}${COMMITTEE_CREATE_LIST_PATH}`;
   const COMMITTEE_APPROVAL_POST_URL = `${API_URL}${COMMITTEE_APPROVAL_POST_PATH}`;
@@ -79,7 +49,11 @@ function CommitteeOverview() {
   const [manualDraftRows, setManualDraftRows] = useState([]);
   const [manualFormError, setManualFormError] = useState(null);
   const [manualFieldErrors, setManualFieldErrors] = useState({});
-  const pendingManualFocusRef = useRef(null);
+  const [csvUploadModalOpen, setCsvUploadModalOpen] = useState(false);
+  const [csvUploadRows, setCsvUploadRows] = useState([]);
+  const [csvFileName, setCsvFileName] = useState('');
+  const [csvDragOver, setCsvDragOver] = useState(false);
+
   const sourceTableWrapRef = useRef(null);
   const stagedTableWrapRef = useRef(null);
   const syncingScrollRef = useRef(false);
@@ -87,6 +61,8 @@ function CommitteeOverview() {
   const dragBaseSelectionRef = useRef(new Set());
   const isDraggingRef = useRef(false);
   const dragTableTypeRef = useRef(null); // "source" | "staged"
+  const pendingManualFocusRef = useRef(null);
+  const csvFileInputRef = useRef(null);
 
   const fetchCommitteeList = useCallback(async () => {
     setLoading(true);
@@ -114,8 +90,8 @@ function CommitteeOverview() {
 
   const headers = useMemo(() => {
     const fromRows = rows.length > 0 ? Object.keys(rows[0]) : [];
-    const fromStaged = (Array.isArray(stagedRows) ? stagedRows : []).flatMap(
-      (e) => Object.keys(e?.row ?? {}),
+    const fromStaged = (Array.isArray(stagedRows) ? stagedRows : []).flatMap((e) =>
+      Object.keys(e?.row ?? {}),
     );
     const union = [...new Set([...fromRows, ...fromStaged])];
     if (union.length === 0) return [];
@@ -348,7 +324,18 @@ function CommitteeOverview() {
     setManualDraftRows([]);
     setManualFormError(null);
     setManualFieldErrors({});
+    setCsvUploadModalOpen(false);
+    setCsvUploadRows([]);
+    setCsvFileName('');
+    setCsvDragOver(false);
   }, [setStagedRows]);
+
+  const closeCsvUploadModal = useCallback(() => {
+    setCsvUploadModalOpen(false);
+    setCsvUploadRows([]);
+    setCsvFileName('');
+    setCsvDragOver(false);
+  }, []);
 
   const createEmptyManualDraftRow = useCallback(() => {
     const row = {};
@@ -358,16 +345,19 @@ function CommitteeOverview() {
     return row;
   }, [headers]);
 
-  const openManualItemModal = useCallback((insertAfterIndex = null) => {
-    if (headers.length === 0) return;
-    setManualItemModalOpen(true);
-    setManualInsertAfterIndex(
-      typeof insertAfterIndex === 'number' ? insertAfterIndex : null,
-    );
-    setManualFormError(null);
-    setManualFieldErrors({});
-    setManualDraftRows([createEmptyManualDraftRow()]);
-  }, [headers, createEmptyManualDraftRow]);
+  const openManualItemModal = useCallback(
+    (insertAfterIndex = null) => {
+      if (headers.length === 0) return;
+      setManualItemModalOpen(true);
+      setManualInsertAfterIndex(
+        typeof insertAfterIndex === 'number' ? insertAfterIndex : null,
+      );
+      setManualFormError(null);
+      setManualFieldErrors({});
+      setManualDraftRows([createEmptyManualDraftRow()]);
+    },
+    [headers.length, createEmptyManualDraftRow],
+  );
 
   const closeManualItemModal = useCallback(() => {
     setManualItemModalOpen(false);
@@ -503,6 +493,85 @@ function CommitteeOverview() {
     [setStagedRows],
   );
 
+  const openCsvUploadModal = useCallback(() => {
+    if (headers.length === 0) return;
+    setCsvUploadModalOpen(true);
+    setCsvUploadRows([]);
+    setCsvFileName('');
+    setCsvDragOver(false);
+  }, [headers.length]);
+
+  const downloadCsvTemplate = useCallback(() => {
+    if (headers.length === 0) return;
+    const content = buildCsvTemplate(headers);
+    const blob = new Blob(['\uFEFF', content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'committee_staging_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [headers]);
+
+  const parseCsvFileToRows = useCallback(
+    async (file) => {
+      if (!file || headers.length === 0) return false;
+      try {
+        const text = await file.text();
+        const matrix = parseCsvText(text);
+        if (matrix.length < 2) throw new Error('empty');
+        const csvHeaders = matrix[0].map((v) => String(v ?? '').trim());
+        const headerMatched =
+          csvHeaders.length === headers.length &&
+          headers.every((h, idx) => csvHeaders[idx] === h);
+        if (!headerMatched) throw new Error('header mismatch');
+
+        const parsedRows = [];
+        for (let i = 1; i < matrix.length; i += 1) {
+          const line = matrix[i];
+          if (line.length !== headers.length) throw new Error('column mismatch');
+          const values = line.map((v) => String(v ?? '').trim());
+          const hasAny = values.some((v) => v.length > 0);
+          if (!hasAny) continue;
+          if (values.some((v) => v.length === 0)) throw new Error('empty cell');
+          const row = {};
+          headers.forEach((h, idx) => {
+            row[h] = values[idx];
+          });
+          parsedRows.push(row);
+        }
+        if (parsedRows.length === 0) throw new Error('no rows');
+        setCsvUploadRows(parsedRows);
+        setCsvFileName(file.name ?? '');
+        return true;
+      } catch (err) {
+        setCsvUploadRows([]);
+        setCsvFileName('');
+        alert('포맷이 맞지 않습니다.');
+        return false;
+      }
+    },
+    [headers],
+  );
+
+  const uploadCsvRowsToStaging = useCallback(() => {
+    if (!csvUploadRows.length) return;
+    setStagedRows((prev) => {
+      const list = Array.isArray(prev) ? prev : [];
+      const additions = csvUploadRows.map((row) => ({
+        rowKey: newManualRowKey(),
+        row,
+        isManual: true,
+      }));
+      return [...list, ...additions];
+    });
+    setSubmitError(null);
+    setSubmitMessage(null);
+    closeCsvUploadModal();
+  }, [csvUploadRows, setStagedRows, closeCsvUploadModal]);
+
   const stagedColCount = headers.length + 2;
 
   const missingApproveReasonKeys = useMemo(
@@ -628,61 +697,17 @@ function CommitteeOverview() {
           alignItems: 'stretch',
         }}
       >
-        <div className='invest-rev-request__panel'>
-          <h2 className='invest-rev-request__panel-title'>
-            투심위 대상 목록 (CTRL + 클릭 다중 선택)
-          </h2>
-          <div
-            className='invest-rev-request__table-wrap'
-            ref={sourceTableWrapRef}
-            onScroll={handleSourceTableScroll}
-          >
-            <table className='invest-rev-request__table'>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  {headers.map((h) => (
-                    <th key={h}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {visibleRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={Math.max(headers.length + 1, 1)}>
-                      <p className='invest-rev-request__empty-row'>
-                        투심위 항목이 없습니다.
-                      </p>
-                    </td>
-                  </tr>
-                ) : (
-                  visibleRows.map(({ row, rowKey }, idx) => {
-                    const selected = sourceSelectedKeys.has(rowKey);
-                    return (
-                      <tr
-                        key={rowKey}
-                        className={
-                          selected ? 'invest-rev-request__row--selected' : ''
-                        }
-                        onMouseDown={(e) =>
-                          beginDragSelection(e, rowKey, idx, 'source')
-                        }
-                        onMouseEnter={(e) => updateDragSelection(e, idx)}
-                        onMouseUp={endDragSelection}
-                        title='CTRL + 클릭으로 다중 선택'
-                      >
-                        <td>{idx + 1}</td>
-                        {headers.map((h) => (
-                          <td key={h}>{displayCell(row[h])}</td>
-                        ))}
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <CommitteeSourceTablePanel
+          headers={headers}
+          visibleRows={visibleRows}
+          sourceSelectedKeys={sourceSelectedKeys}
+          sourceTableWrapRef={sourceTableWrapRef}
+          handleSourceTableScroll={handleSourceTableScroll}
+          beginDragSelection={beginDragSelection}
+          updateDragSelection={updateDragSelection}
+          endDragSelection={endDragSelection}
+          displayCell={displayCell}
+        />
 
         <div
           style={{
@@ -718,122 +743,23 @@ function CommitteeOverview() {
           </div>
         </div>
 
-        <div className='invest-rev-request__panel'>
-          <h2 className='invest-rev-request__panel-title'>
-            투심위 생성 리스트
-          </h2>
-          <div
-            className='invest-rev-request__table-wrap'
-            ref={stagedTableWrapRef}
-            onScroll={handleStagedTableScroll}
-          >
-            <table className='invest-rev-request__table invest-rev-request__table--staged'>
-              <thead>
-                <tr>
-                  <th
-                    className='invest-rev-request__th--staged-remove'
-                    aria-label='제거'
-                  />
-                  <th>#</th>
-                  {headers.map((h) => (
-                    <th key={h}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {stagedRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={Math.max(stagedColCount, 1)}>
-                      <div className='invest-rev-request__empty-staged'>
-                        <p className='invest-rev-request__empty-row invest-rev-request__empty-row--staged'>
-                          투심위 항목이 없습니다.
-                        </p>
-                        {headers.length > 0 ? (
-                          <button
-                            type='button'
-                            className='invest-rev-request__btn invest-rev-request__btn--plus'
-                            onClick={() => openManualItemModal(-1)}
-                          >
-                            +
-                          </button>
-                        ) : (
-                          <p className='invest-rev-request__empty-hint'>
-                            대상 목록을 불러오면 신규 항목을 추가할 수 있습니다.
-                          </p>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  <>
-                    {stagedRows.map((entry, idx) => {
-                      const rowKey = String(entry?.rowKey ?? idx);
-                      const row = entry?.row ?? {};
-                      const selected = stagedSelectedKeys.has(rowKey);
-                      const isManual = Boolean(entry?.isManual);
-                      return (
-                        <tr
-                          key={rowKey}
-                          className={
-                            selected ? 'invest-rev-request__row--selected' : ''
-                          }
-                          onMouseDown={(e) =>
-                            beginDragSelection(e, rowKey, idx, 'staged')
-                          }
-                          onMouseEnter={(e) => updateDragSelection(e, idx)}
-                          onMouseUp={endDragSelection}
-                          title='CTRL + 클릭으로 다중 선택'
-                        >
-                          <td
-                            className='invest-rev-request__td--staged-remove'
-                            onMouseDown={(e) => e.stopPropagation()}
-                          >
-                            {isManual ? (
-                              <button
-                                type='button'
-                                className='invest-rev-request__btn invest-rev-request__btn--secondary invest-rev-request__btn--remove'
-                                onClick={() => removeStagedRow(rowKey)}
-                              >
-                                제거
-                              </button>
-                            ) : null}
-                          </td>
-                          <td>{idx + 1}</td>
-                          {headers.map((h) => (
-                            <td key={h}>{displayCell(row[h])}</td>
-                          ))}
-                        </tr>
-                      );
-                    })}
-                    {headers.length > 0 ? (
-                      <tr className='invest-rev-request__plus-row'>
-                        <td
-                          colSpan={stagedColCount}
-                          className='invest-rev-request__plus-cell'
-                        >
-                          <button
-                            type='button'
-                            className='invest-rev-request__btn invest-rev-request__btn--plus'
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClick={() => openManualItemModal(stagedRows.length - 1)}
-                            title='마지막 항목 아래에 신규 항목을 추가합니다'
-                          >
-                            +
-                          </button>
-                        </td>
-                      </tr>
-                    ) : null}
-                  </>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <CommitteeStagedTablePanel
+          headers={headers}
+          stagedRows={stagedRows}
+          stagedSelectedKeys={stagedSelectedKeys}
+          stagedColCount={stagedColCount}
+          stagedTableWrapRef={stagedTableWrapRef}
+          handleStagedTableScroll={handleStagedTableScroll}
+          beginDragSelection={beginDragSelection}
+          updateDragSelection={updateDragSelection}
+          endDragSelection={endDragSelection}
+          removeStagedRow={removeStagedRow}
+          openManualItemModal={openManualItemModal}
+          displayCell={displayCell}
+        />
       </div>
-      <div
-        className='invest-rev-request__toolbar'
-        style={{ marginTop: '1rem' }}
-      >
+
+      <div className='invest-rev-request__toolbar' style={{ marginTop: '1rem' }}>
         <button
           type='button'
           className='invest-rev-request__btn invest-rev-request__btn--primary'
@@ -850,206 +776,78 @@ function CommitteeOverview() {
         >
           투심위 리스트 전체 삭제
         </button>
+        <button
+          type='button'
+          className='invest-rev-request__btn invest-rev-request__btn--secondary'
+          style={{ marginLeft: 'auto' }}
+          onClick={downloadCsvTemplate}
+          disabled={headers.length === 0}
+        >
+          양식 다운로드
+        </button>
+        <button
+          type='button'
+          className='invest-rev-request__btn invest-rev-request__btn--secondary'
+          onClick={openCsvUploadModal}
+          disabled={headers.length === 0}
+        >
+          양식 업로드
+        </button>
       </div>
 
-      {approveModalOpen && (
-        <div className='invest-rev-request__modal-backdrop' role='presentation'>
-          <div
-            className='invest-rev-request__modal'
-            role='dialog'
-            aria-modal='true'
-            aria-label='승인 요청 사유 입력'
-          >
-            <div className='invest-rev-request__modal-header'>
-              <h3 className='invest-rev-request__modal-title'>승인 요청</h3>
-              <button
-                type='button'
-                className='invest-rev-request__btn invest-rev-request__btn--secondary'
-                onClick={closeApproveModal}
-                disabled={submitting}
-              >
-                닫기
-              </button>
-            </div>
+      <CommitteeApproveModal
+        approveModalOpen={approveModalOpen}
+        submitting={submitting}
+        approveValidationMessage={approveValidationMessage}
+        missingApproveReasonKeys={missingApproveReasonKeys}
+        closeApproveModal={closeApproveModal}
+        stagedRows={stagedRows}
+        approveReasons={approveReasons}
+        handleApproveReasonChange={handleApproveReasonChange}
+        canSubmitApprove={canSubmitApprove}
+        setApproveValidationMessage={setApproveValidationMessage}
+        handleApproveRequest={handleApproveRequest}
+        displayCell={displayCell}
+      />
 
-            {(approveValidationMessage || missingApproveReasonKeys.length > 0) && (
-              <div className='invest-rev-request__error' role='alert'>
-                {approveValidationMessage ?? '요청 사유를 입력해주세요.'}
-              </div>
-            )}
+      <CommitteeManualEntryModal
+        manualItemModalOpen={manualItemModalOpen}
+        manualFormError={manualFormError}
+        headers={headers}
+        manualDraftRows={manualDraftRows}
+        manualFieldErrors={manualFieldErrors}
+        handleManualDraftChange={handleManualDraftChange}
+        handleManualCellKeyDown={handleManualCellKeyDown}
+        addManualDraftRow={addManualDraftRow}
+        closeManualItemModal={closeManualItemModal}
+        saveManualItemToStaging={saveManualItemToStaging}
+      />
 
-            <div className='invest-rev-request__table-wrap invest-rev-request__modal-table-wrap'>
-              <table className='invest-rev-request__table'>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    {APPROVE_REASON_COLUMNS.map((col) => (
-                      <th key={col}>{col}</th>
-                    ))}
-                    <th>요청 사유</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stagedRows.map((entry, idx) => {
-                    const row = entry?.row ?? {};
-                    const rowKey = String(entry?.rowKey ?? idx);
-                    const reason = approveReasons[rowKey] ?? '';
-                    const hasReason = reason.trim().length > 0;
-                    return (
-                      <tr key={rowKey}>
-                        <td>{idx + 1}</td>
-                        {APPROVE_REASON_COLUMNS.map((col) => (
-                          <td key={col}>{displayCell(row[col])}</td>
-                        ))}
-                        <td className='invest-rev-request__reason-cell'>
-                          <textarea
-                            className='invest-rev-request__textarea'
-                            value={reason}
-                            onChange={(e) =>
-                              handleApproveReasonChange(rowKey, e.target.value)
-                            }
-                            placeholder='요청 사유를 입력해주세요.'
-                          />
-                          {!hasReason && (
-                            <p className='invest-rev-request__reason-error'>
-                              요청 사유를 입력해주세요.
-                            </p>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+      <CommitteeCsvUploadModal
+        open={csvUploadModalOpen}
+        csvFileName={csvFileName}
+        csvUploadReadyCount={csvUploadRows.length}
+        csvDragOver={csvDragOver}
+        setCsvDragOver={setCsvDragOver}
+        onClose={closeCsvUploadModal}
+        onPickFile={() => csvFileInputRef.current?.click()}
+        onDropFile={parseCsvFileToRows}
+        onUpload={uploadCsvRowsToStaging}
+      />
 
-            <div className='invest-rev-request__toolbar' style={{ marginTop: '1rem' }}>
-              <button
-                type='button'
-                className='invest-rev-request__btn invest-rev-request__btn--primary'
-                onClick={() => {
-                  if (missingApproveReasonKeys.length > 0) {
-                    setApproveValidationMessage('요청 사유를 입력해주세요.');
-                    return;
-                  }
-                  void handleApproveRequest();
-                }}
-                disabled={!canSubmitApprove}
-              >
-                {submitting ? '요청 전송 중…' : '승인 요청'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {manualItemModalOpen && (
-        <div
-          className='invest-rev-request__modal-backdrop invest-rev-request__modal-backdrop--form'
-          role='presentation'
-        >
-          <div
-            className='invest-rev-request__modal invest-rev-request__modal--form'
-            role='dialog'
-            aria-modal='true'
-            aria-label='투심위 신규 항목 입력'
-          >
-            <div className='invest-rev-request__modal-header'>
-              <h3 className='invest-rev-request__modal-title'>
-                투심위 신규 항목
-              </h3>
-            </div>
-            <p className='invest-rev-request__modal-desc'>
-              엑셀처럼 좌에서 우로 입력하세요. 마지막 컬럼에서 Enter/Tab을 누르면
-              다음 행의 2번째 칸이 자동 생성/이동됩니다.
-            </p>
-
-            {manualFormError && (
-              <div className='invest-rev-request__error' role='alert'>
-                {manualFormError}
-              </div>
-            )}
-
-            <div className='invest-rev-request__modal-form-scroll'>
-              <table className='invest-rev-request__table invest-rev-request__table--manual-grid'>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    {headers.map((h) => (
-                      <th key={h}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {manualDraftRows.map((draftRow, rowIndex) => (
-                    <tr key={`manual-draft-${rowIndex}`}>
-                      <td>{rowIndex + 1}</td>
-                      {headers.map((h, colIndex) => {
-                        const fieldKey = `${rowIndex}:${h}`;
-                        const hasFieldError = Boolean(manualFieldErrors[fieldKey]);
-                        return (
-                          <td
-                            key={`${h}-${rowIndex}`}
-                            className={
-                              hasFieldError
-                                ? 'invest-rev-request__manual-cell--error'
-                                : ''
-                            }
-                          >
-                            <input
-                              id={`committee-manual-cell-${rowIndex}-${colIndex}`}
-                              type='text'
-                              className='invest-rev-request__manual-grid-input'
-                              value={draftRow[h] ?? ''}
-                              onChange={(e) =>
-                                handleManualDraftChange(
-                                  rowIndex,
-                                  h,
-                                  e.target.value,
-                                )
-                              }
-                              onKeyDown={(e) =>
-                                handleManualCellKeyDown(e, rowIndex, colIndex)
-                              }
-                              autoComplete='off'
-                            />
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className='invest-rev-request__toolbar' style={{ marginTop: '1rem' }}>
-              <button
-                type='button'
-                className='invest-rev-request__btn invest-rev-request__btn--secondary'
-                onClick={addManualDraftRow}
-              >
-                행 추가
-              </button>
-              <button
-                type='button'
-                className='invest-rev-request__btn invest-rev-request__btn--secondary'
-                onClick={closeManualItemModal}
-              >
-                취소
-              </button>
-              <button
-                type='button'
-                className='invest-rev-request__btn invest-rev-request__btn--primary'
-                onClick={saveManualItemToStaging}
-              >
-                임시 저장
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <input
+        ref={csvFileInputRef}
+        type='file'
+        accept='.csv,text/csv'
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void parseCsvFileToRows(file);
+          e.target.value = '';
+        }}
+      />
     </div>
   );
 }
 
-export default CommitteeOverview;
+export default CommitteeOverviewPage;
