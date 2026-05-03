@@ -363,6 +363,7 @@
 
 .invest-rev-request__plus-cell {
   padding: 0.35rem 0.5rem;
+  margin-left: 100px;
   text-align: center;
   border-bottom: 1px solid #eef0f4;
   background: #fbfcfe;
@@ -373,8 +374,8 @@
 }
 
 .invest-rev-request__btn--plus {
-  min-width: 2rem;
-  min-height: 2rem;
+  min-width: 1rem;
+  min-height: 1rem;
   padding: 0.2rem 0.55rem;
   font-size: 1.15rem;
   font-weight: 700;
@@ -383,6 +384,7 @@
   background: #eef0f4;
   color: #374151;
   border: 1px solid #d8dce3;
+  color: blue;
 }
 
 .invest-rev-request__btn--plus:hover:not(:disabled) {

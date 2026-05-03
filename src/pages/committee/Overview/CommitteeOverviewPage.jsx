@@ -695,7 +695,7 @@ function CommitteeOverviewPage() {
   return (
     <div className='invest-rev-sub-page invest-rev-request'>
       <p className='invest-rev-sub-badge invest-rev-sub-badge--active'>
-        현재 탭: 투심위 개요
+        현재 탭: 투심위 리스트 생성
       </p>
       <p className='invest-rev-sub-desc' style={{ marginBottom: '1rem' }}>
         양쪽 테이블에서 CTRL + 클릭/드래그로 다중 선택 후, 가운데 화살표
@@ -905,7 +905,7 @@ function CommitteeOverviewPage() {
         open={clearStagingModalOpen}
         title='투심위 리스트를 모두 삭제할까요?'
         message='투심위 생성 리스트(임시 보관)에 있는 모든 항목이 삭제됩니다. 계속 진행할까요?'
-        cancelLabel='머무르기'
+        cancelLabel='뒤로 가기'
         confirmLabel='전체 삭제'
         onCancel={() => setClearStagingModalOpen(false)}
         onConfirm={clearStaging}

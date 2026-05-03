@@ -1,8 +1,13 @@
 export const COMMITTEE_CREATE_LIST_PATH = '/committee/create-list/';
 export const COMMITTEE_APPROVAL_POST_PATH = '/committee/create-list/';
-export const COMMITTEE_STAGE_SESSION_KEY = 'p-invest:committee:overview-staging';
+export const COMMITTEE_STAGE_SESSION_KEY =
+  'p-invest:committee:overview-staging';
 export const KEY_FIRST = ['구분0 (사업명)', '구분0 순번'];
-export const APPROVE_REASON_COLUMNS = ['구분0 (사업명)', '구분0 순번', '투자사업명'];
+export const APPROVE_REASON_COLUMNS = [
+  '구분0 (사업명)',
+  '구분0 순번',
+  '투자사업명',
+];
 
 export function normalizeRows(raw) {
   const list = Array.isArray(raw) ? raw : (raw?.data ?? raw?.results ?? []);
@@ -26,7 +31,10 @@ export function getPrimeKey(row, fallback) {
 }
 
 export function newManualRowKey() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+  ) {
     return `manual-${crypto.randomUUID()}`;
   }
   return `manual-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
@@ -91,7 +99,9 @@ function parseCsvLine(line) {
 }
 
 export function parseCsvText(csvText) {
-  const normalized = String(csvText ?? '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const normalized = String(csvText ?? '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
   const lines = normalized
     .split('\n')
     .map((line) => line.trimEnd())

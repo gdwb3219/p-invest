@@ -2,15 +2,15 @@ import { NavLink, Outlet } from 'react-router-dom';
 import '../styles/pages/CommitteePage.css';
 
 const TAB_ROUTES = [
-  { path: 'overview', label: '개요' },
-  { path: 'requests', label: '요청 현황' },
+  { path: 'overview', label: '투심위 생성' },
+  { path: 'requests', label: '투심위 생성 현황' },
 ];
 
 function CommitteePage() {
   return (
     <div className='invest-rev-page'>
       <header className='invest-rev-header'>
-        <h1 className='invest-rev-title'>투심위</h1>
+        <h1 className='invest-rev-title'>투자 심의 위원회 관리</h1>
         <nav className='invest-rev-tabs'>
           {TAB_ROUTES.map(({ path, label }) => (
             <NavLink

@@ -1,3 +1,5 @@
+import { FaPlus, FaMinus } from 'react-icons/fa';
+
 function CommitteeStagedTablePanel({
   headers,
   stagedRows,
@@ -23,7 +25,10 @@ function CommitteeStagedTablePanel({
         <table className='invest-rev-request__table invest-rev-request__table--staged'>
           <thead>
             <tr>
-              <th className='invest-rev-request__th--staged-remove' aria-label='제거' />
+              <th
+                className='invest-rev-request__th--staged-remove'
+                aria-label='제거'
+              />
               <th>#</th>
               {headers.map((h) => (
                 <th key={h}>{h}</th>
@@ -64,8 +69,12 @@ function CommitteeStagedTablePanel({
                   return (
                     <tr
                       key={rowKey}
-                      className={selected ? 'invest-rev-request__row--selected' : ''}
-                      onMouseDown={(e) => beginDragSelection(e, rowKey, idx, 'staged')}
+                      className={
+                        selected ? 'invest-rev-request__row--selected' : ''
+                      }
+                      onMouseDown={(e) =>
+                        beginDragSelection(e, rowKey, idx, 'staged')
+                      }
                       onMouseEnter={(e) => updateDragSelection(e, idx)}
                       onMouseUp={endDragSelection}
                       title='CTRL + 클릭으로 다중 선택'
@@ -80,7 +89,7 @@ function CommitteeStagedTablePanel({
                             className='invest-rev-request__btn invest-rev-request__btn--secondary invest-rev-request__btn--remove'
                             onClick={() => removeStagedRow(rowKey)}
                           >
-                            제거
+                            <FaMinus />
                           </button>
                         ) : null}
                       </td>
@@ -93,15 +102,20 @@ function CommitteeStagedTablePanel({
                 })}
                 {headers.length > 0 ? (
                   <tr className='invest-rev-request__plus-row'>
-                    <td colSpan={stagedColCount} className='invest-rev-request__plus-cell'>
+                    <td
+                      colSpan={stagedColCount}
+                      className='invest-rev-request__plus-cell'
+                    >
                       <button
                         type='button'
                         className='invest-rev-request__btn invest-rev-request__btn--plus'
                         onMouseDown={(e) => e.stopPropagation()}
-                        onClick={() => openManualItemModal(stagedRows.length - 1)}
+                        onClick={() =>
+                          openManualItemModal(stagedRows.length - 1)
+                        }
                         title='마지막 항목 아래에 신규 항목을 추가합니다'
                       >
-                        +
+                        <FaPlus />
                       </button>
                     </td>
                   </tr>
