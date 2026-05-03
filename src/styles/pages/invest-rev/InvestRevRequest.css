@@ -167,6 +167,14 @@
   border: 1px solid rgba(245, 158, 11, 0.45);
 }
 
+.invest-rev-request__source-filter {
+  margin-bottom: 0.75rem;
+}
+
+.invest-rev-request__input--source-filter {
+  max-width: 28rem;
+}
+
 .invest-rev-request__form-group {
   margin-bottom: 1rem;
 }

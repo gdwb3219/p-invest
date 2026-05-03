@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useSessionStorage } from '../../../hooks/useCustomHooks';
 import { useApiUrl } from '../../../contexts/ApiUrlContext';
 import '../../../styles/pages/invest-rev/InvestRevRequest.css';
+import '../../../styles/pages/invest-rev/InvestCommitteeChange.css';
+import CancelModal from '../../invest-rev/modal/CancelModal.jsx';
 import CommitteeSourceTablePanel from './components/CommitteeSourceTablePanel';
 import CommitteeStagedTablePanel from './components/CommitteeStagedTablePanel';
 import CommitteeApproveModal from './components/CommitteeApproveModal';
@@ -21,6 +23,8 @@ import {
   buildCsvTemplate,
   parseCsvText,
 } from './overviewUtils';
+
+const INVEST_PROJECT_NAME_COL = '투자사업명';
 
 function CommitteeOverviewPage() {
   const { API_URL } = useApiUrl();
@@ -43,7 +47,9 @@ function CommitteeOverviewPage() {
   const [submitMessage, setSubmitMessage] = useState(null);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [approveReasons, setApproveReasons] = useState({});
-  const [approveValidationMessage, setApproveValidationMessage] = useState(null);
+  const [approveRequesterName, setApproveRequesterName] = useState('');
+  const [approveValidationMessage, setApproveValidationMessage] =
+    useState(null);
   const [manualItemModalOpen, setManualItemModalOpen] = useState(false);
   const [manualInsertAfterIndex, setManualInsertAfterIndex] = useState(null);
   const [manualDraftRows, setManualDraftRows] = useState([]);
@@ -53,6 +59,8 @@ function CommitteeOverviewPage() {
   const [csvUploadRows, setCsvUploadRows] = useState([]);
   const [csvFileName, setCsvFileName] = useState('');
   const [csvDragOver, setCsvDragOver] = useState(false);
+  const [clearStagingModalOpen, setClearStagingModalOpen] = useState(false);
+  const [sourceInvestNameFilter, setSourceInvestNameFilter] = useState('');
 
   const sourceTableWrapRef = useRef(null);
   const stagedTableWrapRef = useRef(null);
@@ -90,8 +98,8 @@ function CommitteeOverviewPage() {
 
   const headers = useMemo(() => {
     const fromRows = rows.length > 0 ? Object.keys(rows[0]) : [];
-    const fromStaged = (Array.isArray(stagedRows) ? stagedRows : []).flatMap((e) =>
-      Object.keys(e?.row ?? {}),
+    const fromStaged = (Array.isArray(stagedRows) ? stagedRows : []).flatMap(
+      (e) => Object.keys(e?.row ?? {}),
     );
     const union = [...new Set([...fromRows, ...fromStaged])];
     if (union.length === 0) return [];
@@ -118,8 +126,20 @@ function CommitteeOverviewPage() {
     [rows, stagedKeySet],
   );
 
+  const filteredSourceVisibleRows = useMemo(() => {
+    const q = sourceInvestNameFilter.trim().toLowerCase();
+    if (!q || !headers.includes(INVEST_PROJECT_NAME_COL)) return visibleRows;
+    return visibleRows.filter(({ row }) =>
+      String(row[INVEST_PROJECT_NAME_COL] ?? '')
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [visibleRows, sourceInvestNameFilter, headers]);
+
   const syncSourceSelectedKeysWithRows = useCallback(() => {
-    const currentKeys = new Set(visibleRows.map(({ rowKey }) => rowKey));
+    const currentKeys = new Set(
+      filteredSourceVisibleRows.map(({ rowKey }) => rowKey),
+    );
     setSourceSelectedKeys((prev) => {
       const next = new Set();
       prev.forEach((k) => {
@@ -127,7 +147,7 @@ function CommitteeOverviewPage() {
       });
       return next;
     });
-  }, [visibleRows]);
+  }, [filteredSourceVisibleRows]);
 
   useEffect(() => {
     syncSourceSelectedKeysWithRows();
@@ -182,7 +202,7 @@ function CommitteeOverviewPage() {
           ? (Array.isArray(stagedRows) ? stagedRows : []).map((entry, idx) => ({
               rowKey: String(entry?.rowKey ?? idx),
             }))
-          : visibleRows;
+          : filteredSourceVisibleRows;
       const min = Math.min(startIndex, endIndex);
       const max = Math.max(startIndex, endIndex);
       const rangeKeys = new Set(
@@ -194,7 +214,7 @@ function CommitteeOverviewPage() {
       if (tableType === 'staged') setStagedSelectedKeys(next);
       else setSourceSelectedKeys(next);
     },
-    [visibleRows, stagedRows],
+    [filteredSourceVisibleRows, stagedRows],
   );
 
   const beginDragSelection = useCallback(
@@ -319,6 +339,7 @@ function CommitteeOverviewPage() {
     setApproveModalOpen(false);
     setApproveValidationMessage(null);
     setApproveReasons({});
+    setApproveRequesterName('');
     setManualItemModalOpen(false);
     setManualInsertAfterIndex(null);
     setManualDraftRows([]);
@@ -328,6 +349,7 @@ function CommitteeOverviewPage() {
     setCsvUploadRows([]);
     setCsvFileName('');
     setCsvDragOver(false);
+    setClearStagingModalOpen(false);
   }, [setStagedRows]);
 
   const closeCsvUploadModal = useCallback(() => {
@@ -369,7 +391,9 @@ function CommitteeOverviewPage() {
 
   const handleManualDraftChange = useCallback((rowIndex, col, value) => {
     setManualDraftRows((prev) =>
-      prev.map((row, idx) => (idx === rowIndex ? { ...row, [col]: value } : row)),
+      prev.map((row, idx) =>
+        idx === rowIndex ? { ...row, [col]: value } : row,
+      ),
     );
     setManualFieldErrors((prev) => {
       const key = `${rowIndex}:${col}`;
@@ -394,7 +418,10 @@ function CommitteeOverviewPage() {
       e.preventDefault();
       const nextRowIndex = rowIndex + 1;
       const focusColIndex = headers.length > 1 ? 1 : 0;
-      pendingManualFocusRef.current = { rowIndex: nextRowIndex, colIndex: focusColIndex };
+      pendingManualFocusRef.current = {
+        rowIndex: nextRowIndex,
+        colIndex: focusColIndex,
+      };
       setManualDraftRows((prev) => [...prev, createEmptyManualDraftRow()]);
     },
     [headers.length, createEmptyManualDraftRow],
@@ -504,7 +531,9 @@ function CommitteeOverviewPage() {
   const downloadCsvTemplate = useCallback(() => {
     if (headers.length === 0) return;
     const content = buildCsvTemplate(headers);
-    const blob = new Blob(['\uFEFF', content], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF', content], {
+      type: 'text/csv;charset=utf-8;',
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -531,7 +560,8 @@ function CommitteeOverviewPage() {
         const parsedRows = [];
         for (let i = 1; i < matrix.length; i += 1) {
           const line = matrix[i];
-          if (line.length !== headers.length) throw new Error('column mismatch');
+          if (line.length !== headers.length)
+            throw new Error('column mismatch');
           const values = line.map((v) => String(v ?? '').trim());
           const hasAny = values.some((v) => v.length > 0);
           if (!hasAny) continue;
@@ -547,6 +577,7 @@ function CommitteeOverviewPage() {
         setCsvFileName(file.name ?? '');
         return true;
       } catch (err) {
+        console.error('CSV 파일 파싱 오류:', err);
         setCsvUploadRows([]);
         setCsvFileName('');
         alert('포맷이 맞지 않습니다.');
@@ -583,12 +614,16 @@ function CommitteeOverviewPage() {
   );
 
   const canSubmitApprove =
-    stagedRows.length > 0 && missingApproveReasonKeys.length === 0 && !submitting;
+    stagedRows.length > 0 &&
+    missingApproveReasonKeys.length === 0 &&
+    approveRequesterName.trim().length > 0 &&
+    !submitting;
 
   const openApproveModal = useCallback(() => {
     if (stagedRows.length === 0 || submitting) return;
     setApproveModalOpen(true);
     setApproveValidationMessage(null);
+    setApproveRequesterName('');
     setSubmitError(null);
     setSubmitMessage(null);
   }, [stagedRows.length, submitting]);
@@ -597,16 +632,22 @@ function CommitteeOverviewPage() {
     if (submitting) return;
     setApproveModalOpen(false);
     setApproveValidationMessage(null);
+    setApproveRequesterName('');
   }, [submitting]);
 
   const handleApproveReasonChange = useCallback((rowKey, value) => {
     setApproveReasons((prev) => ({ ...prev, [rowKey]: value }));
   }, []);
 
+  // 투심위 승인 요청
   const handleApproveRequest = useCallback(async () => {
     if (stagedRows.length === 0 || submitting) return;
     if (missingApproveReasonKeys.length > 0) {
       setApproveValidationMessage('요청 사유를 입력해주세요.');
+      return;
+    }
+    if (!approveRequesterName.trim()) {
+      setApproveValidationMessage('승인 요청자를 입력해주세요.');
       return;
     }
     setSubmitting(true);
@@ -614,12 +655,14 @@ function CommitteeOverviewPage() {
     setSubmitMessage(null);
     setApproveValidationMessage(null);
     try {
+      const trimmedRequester = approveRequesterName.trim();
       const payload = {
         requests: stagedRows.map((entry) => ({
           prime_key: getPrimeKey(entry?.row, entry?.rowKey),
           row_key: entry.rowKey,
           row_data: entry.row,
           approve_reason: (approveReasons[String(entry?.rowKey)] ?? '').trim(),
+          approve_requester: trimmedRequester,
         })),
       };
       await axios.post(COMMITTEE_APPROVAL_POST_URL, payload, {
@@ -645,6 +688,7 @@ function CommitteeOverviewPage() {
     missingApproveReasonKeys.length,
     COMMITTEE_APPROVAL_POST_URL,
     approveReasons,
+    approveRequesterName,
     clearStaging,
   ]);
 
@@ -699,7 +743,12 @@ function CommitteeOverviewPage() {
       >
         <CommitteeSourceTablePanel
           headers={headers}
-          visibleRows={visibleRows}
+          visibleRows={filteredSourceVisibleRows}
+          sourceUnfilteredCount={visibleRows.length}
+          sourceInvestNameFilter={sourceInvestNameFilter}
+          setSourceInvestNameFilter={setSourceInvestNameFilter}
+          investProjectNameColumn={INVEST_PROJECT_NAME_COL}
+          hasInvestProjectColumn={headers.includes(INVEST_PROJECT_NAME_COL)}
           sourceSelectedKeys={sourceSelectedKeys}
           sourceTableWrapRef={sourceTableWrapRef}
           handleSourceTableScroll={handleSourceTableScroll}
@@ -759,7 +808,10 @@ function CommitteeOverviewPage() {
         />
       </div>
 
-      <div className='invest-rev-request__toolbar' style={{ marginTop: '1rem' }}>
+      <div
+        className='invest-rev-request__toolbar'
+        style={{ marginTop: '1rem' }}
+      >
         <button
           type='button'
           className='invest-rev-request__btn invest-rev-request__btn--primary'
@@ -771,7 +823,7 @@ function CommitteeOverviewPage() {
         <button
           type='button'
           className='invest-rev-request__btn invest-rev-request__btn--secondary'
-          onClick={clearStaging}
+          onClick={() => setClearStagingModalOpen(true)}
           disabled={stagedRows.length === 0 || submitting}
         >
           투심위 리스트 전체 삭제
@@ -804,6 +856,8 @@ function CommitteeOverviewPage() {
         stagedRows={stagedRows}
         approveReasons={approveReasons}
         handleApproveReasonChange={handleApproveReasonChange}
+        approveRequesterName={approveRequesterName}
+        setApproveRequesterName={setApproveRequesterName}
         canSubmitApprove={canSubmitApprove}
         setApproveValidationMessage={setApproveValidationMessage}
         handleApproveRequest={handleApproveRequest}
@@ -845,6 +899,16 @@ function CommitteeOverviewPage() {
           if (file) void parseCsvFileToRows(file);
           e.target.value = '';
         }}
+      />
+
+      <CancelModal
+        open={clearStagingModalOpen}
+        title='투심위 리스트를 모두 삭제할까요?'
+        message='투심위 생성 리스트(임시 보관)에 있는 모든 항목이 삭제됩니다. 계속 진행할까요?'
+        cancelLabel='머무르기'
+        confirmLabel='전체 삭제'
+        onCancel={() => setClearStagingModalOpen(false)}
+        onConfirm={clearStaging}
       />
     </div>
   );

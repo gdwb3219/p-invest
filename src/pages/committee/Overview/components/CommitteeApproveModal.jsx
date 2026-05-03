@@ -9,6 +9,8 @@ function CommitteeApproveModal({
   stagedRows,
   approveReasons,
   handleApproveReasonChange,
+  approveRequesterName,
+  setApproveRequesterName,
   canSubmitApprove,
   setApproveValidationMessage,
   handleApproveRequest,
@@ -36,7 +38,8 @@ function CommitteeApproveModal({
           </button>
         </div>
 
-        {(approveValidationMessage || missingApproveReasonKeys.length > 0) && (
+        {(approveValidationMessage ||
+          missingApproveReasonKeys.length > 0) && (
           <div className='invest-rev-request__error' role='alert'>
             {approveValidationMessage ?? '요청 사유를 입력해주세요.'}
           </div>
@@ -85,6 +88,32 @@ function CommitteeApproveModal({
           </table>
         </div>
 
+        <div className='invest-rev-request__form-group' style={{ marginTop: '1rem' }}>
+          <label className='invest-rev-request__label' htmlFor='committee-approve-requester'>
+            승인 요청자
+          </label>
+          <input
+            id='committee-approve-requester'
+            type='text'
+            className='invest-rev-request__input'
+            value={approveRequesterName}
+            onChange={(e) => {
+              setApproveRequesterName(e.target.value);
+              if (approveValidationMessage === '승인 요청자를 입력해주세요.') {
+                setApproveValidationMessage(null);
+              }
+            }}
+            placeholder='승인 요청자 성명을 입력해주세요.'
+            autoComplete='name'
+            disabled={submitting}
+          />
+          {!approveRequesterName.trim() && (
+            <p className='invest-rev-request__reason-error'>
+              승인 요청자를 입력해주세요.
+            </p>
+          )}
+        </div>
+
         <div className='invest-rev-request__toolbar' style={{ marginTop: '1rem' }}>
           <button
             type='button'
@@ -92,6 +121,10 @@ function CommitteeApproveModal({
             onClick={() => {
               if (missingApproveReasonKeys.length > 0) {
                 setApproveValidationMessage('요청 사유를 입력해주세요.');
+                return;
+              }
+              if (!approveRequesterName.trim()) {
+                setApproveValidationMessage('승인 요청자를 입력해주세요.');
                 return;
               }
               void handleApproveRequest();
