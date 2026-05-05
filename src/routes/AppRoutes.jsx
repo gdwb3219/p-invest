@@ -7,8 +7,8 @@ import InvestDashboard from '../pages/InvestDashboard';
 import SettingPage from '../pages/SettingPage';
 import CommitteePage from '../pages/CommitteePage';
 import InvestRevPage from '../pages/InvestRevPage';
-import CommitteeOverview from '../pages/committee/Overview/CommitteeOverviewPage';
-import CommitteeRequests from '../pages/committee/Requests/CommitteeRequestsPage';
+import CommitteeOverviewPage from '../pages/committee/Overview/CommitteeOverviewPage';
+import CommitteeRequestsPage from '../pages/committee/Requests/CommitteeRequestsPage';
 import InvestRevList from '../pages/invest-rev/InvestRevList';
 import InvestRevRequest from '../pages/invest-rev/InvestRevRequest';
 import InvestRevHistory from '../pages/invest-rev/InvestRevHistory';
@@ -32,8 +32,8 @@ function AppRoutes() {
       <Route path={ROUTES.SETTINGS} element={<SettingPage />} />
       <Route path={ROUTES.COMMITTEE} element={<CommitteePage />}>
         <Route index element={<Navigate to='overview' replace />} />
-        <Route path='overview' element={<CommitteeOverview />} />
-        <Route path='requests' element={<CommitteeRequests />} />
+        <Route path='overview' element={<CommitteeOverviewPage />} />
+        <Route path='requests' element={<CommitteeRequestsPage />} />
       </Route>
       <Route
         path={ROUTES.INVEST_REV_COMMITTEE_CHANGE}

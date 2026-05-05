@@ -106,7 +106,7 @@
 .invest-rev-request__table-wrap {
   overflow: auto;
   max-height: min(52vh, 260px);
-  min-height: min(52vh, 260px);
+  min-height: min(52vh, 400px);
   border: 1px solid #e8eaef;
   border-radius: 10px;
   background: #fff;
