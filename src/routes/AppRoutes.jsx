@@ -9,6 +9,7 @@ import CommitteePage from '../pages/CommitteePage';
 import InvestRevPage from '../pages/InvestRevPage';
 import CommitteeOverviewPage from '../pages/committee/Overview/CommitteeOverviewPage';
 import CommitteeRequestsPage from '../pages/committee/Requests/CommitteeRequestsPage';
+import CommitteeHistoryListPage from '../pages/committee/History/CommitteeHistoryListPage';
 import InvestRevList from '../pages/invest-rev/InvestRevList';
 import InvestRevRequest from '../pages/invest-rev/InvestRevRequest';
 import InvestRevHistory from '../pages/invest-rev/InvestRevHistory';
@@ -34,6 +35,7 @@ function AppRoutes() {
         <Route index element={<Navigate to='overview' replace />} />
         <Route path='overview' element={<CommitteeOverviewPage />} />
         <Route path='requests' element={<CommitteeRequestsPage />} />
+        <Route path='history-list' element={<CommitteeHistoryListPage />} />
       </Route>
       <Route
         path={ROUTES.INVEST_REV_COMMITTEE_CHANGE}

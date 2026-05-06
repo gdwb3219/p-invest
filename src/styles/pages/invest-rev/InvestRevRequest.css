@@ -354,6 +354,141 @@
   white-space: normal;
 }
 
+/* 투심위 요청 목록: 가로 스크롤 시 오른쪽 삭제 열 고정 */
+.invest-rev-request__table--committee-requests {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.invest-rev-request__table--committee-requests .invest-rev-request__th--committee-select,
+.invest-rev-request__table--committee-requests .invest-rev-request__td--committee-select {
+  position: sticky;
+  left: 0;
+  width: 2.75rem;
+  min-width: 2.75rem;
+  max-width: 2.75rem;
+  text-align: center;
+  vertical-align: middle;
+  background: #fff;
+  border-right: 1px solid #e5e7eb;
+  box-shadow: 6px 0 10px -6px rgba(15, 23, 42, 0.12);
+  z-index: 2;
+}
+
+.invest-rev-request__table--committee-requests .invest-rev-request__th--committee-select {
+  top: 0;
+  z-index: 4;
+  background: #f3f4f7;
+}
+
+.invest-rev-request__table--committee-requests
+  tbody
+  tr:hover
+  .invest-rev-request__td--committee-select {
+  background: #f9fafb;
+}
+
+.invest-rev-request__table--committee-requests
+  tr.invest-rev-request__row--selected
+  .invest-rev-request__td--committee-select {
+  background: rgba(111, 140, 255, 0.12);
+}
+
+.invest-rev-request__table--committee-requests
+  tr.invest-rev-request__row--selected:hover
+  .invest-rev-request__td--committee-select {
+  background: rgba(111, 140, 255, 0.16);
+}
+
+.invest-rev-request__table--committee-requests
+  tr.invest-rev-request__row--selected
+  .invest-rev-request__td--committee-actions {
+  background: rgba(111, 140, 255, 0.12);
+}
+
+.invest-rev-request__table--committee-requests
+  tr.invest-rev-request__row--selected:hover
+  .invest-rev-request__td--committee-actions {
+  background: rgba(111, 140, 255, 0.16);
+}
+
+.invest-rev-request__btn--committee-bulk-delete:disabled {
+  opacity: 0.5;
+}
+
+.invest-rev-request__table--committee-requests .invest-rev-request__th--committee-actions,
+.invest-rev-request__table--committee-requests .invest-rev-request__td--committee-actions {
+  position: sticky;
+  right: 0;
+  width: 5rem;
+  min-width: 5rem;
+  max-width: 5rem;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  background: #fff;
+  border-left: 1px solid #e5e7eb;
+  box-shadow: -6px 0 10px -6px rgba(15, 23, 42, 0.12);
+  z-index: 2;
+}
+
+.invest-rev-request__table--committee-requests .invest-rev-request__th--committee-actions {
+  top: 0;
+  z-index: 3;
+  background: #f3f4f7;
+}
+
+.invest-rev-request__table--committee-requests
+  tbody
+  tr:hover
+  .invest-rev-request__td--committee-actions {
+  background: #f9fafb;
+}
+
+.invest-rev-request__btn--committee-delete.invest-rev-request__btn:disabled {
+  opacity: 0.45;
+}
+
+.invest-rev-request__table--committee-requests
+  tr.invest-rev-request__tr--committee-placeholder
+  td {
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+}
+
+.invest-rev-request__table--committee-requests
+  tr.invest-rev-request__tr--committee-placeholder
+  td.invest-rev-request__td--committee-actions {
+  background: #fff;
+}
+
+.invest-rev-request__table--committee-requests
+  tbody
+  tr.invest-rev-request__tr--committee-placeholder:hover
+  td {
+  background: #fafafa;
+}
+
+.invest-rev-request__table--committee-requests
+  tbody
+  tr.invest-rev-request__tr--committee-placeholder:hover
+  td.invest-rev-request__td--committee-actions {
+  background: #fafafa;
+}
+
+.invest-rev-request__table--committee-requests
+  tr.invest-rev-request__tr--committee-placeholder
+  .invest-rev-request__td--committee-select {
+  background: #fff;
+}
+
+.invest-rev-request__table--committee-requests
+  tbody
+  tr.invest-rev-request__tr--committee-placeholder:hover
+  .invest-rev-request__td--committee-select {
+  background: #fafafa;
+}
+
 .invest-rev-request__btn--remove {
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;

@@ -548,7 +548,25 @@ function CommitteeOverviewPage() {
     async (file) => {
       if (!file || headers.length === 0) return false;
       try {
+        // 에러 발생 추정 지점
         const text = await file.text();
+
+        // 변경 해보자
+        // // 인코딩 방식 변경 1
+        // const buffer = await file.arrayBuffer();
+
+        // const decoder = new TextDecoder('euc-kr');
+        // const text = decoder.decode(buffer);
+
+        // 스마트한 디코딩 로직 예시 2
+        // const buffer = await file.arrayBuffer();
+        // let text = new TextDecoder('utf-8').decode(buffer);
+
+        // // utf-8로 읽었는데 글자가 깨진 기호()가 포함되어 있다면, euc-kr로 다시 읽기
+        // if (text.includes('')) {
+        //   text = new TextDecoder('euc-kr').decode(buffer);
+        // }
+
         const matrix = parseCsvText(text);
         if (matrix.length < 2) throw new Error('empty');
         const csvHeaders = matrix[0].map((v) => String(v ?? '').trim());

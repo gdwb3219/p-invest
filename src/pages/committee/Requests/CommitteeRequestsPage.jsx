@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { useApiUrl } from '../../../contexts/ApiUrlContext';
 import '../../../styles/pages/invest-rev/InvestRevRequest.css';
 import { getOrderedHeaders, normalizeRows } from '../Overview/overviewUtils';
 
+/** 데이터 없을 때도 테이블 몸통 높이 유지용 빈 행 개수 */
+const EMPTY_TABLE_PLACEHOLDER_ROWS = 12;
+
 const COMMITTEE_LIST_PATH = '/committee/list/';
 /** 현재 목록의 committee_status 일괄 변경 — 백엔드 계약에 맞게 조정하세요. */
-const COMMITTEE_LIST_CONFIRM_PATH = '/committee/list/confirm-committee/';
+const COMMITTEE_LIST_CONFIRM_PATH = '/committee/list/';
 /** 프론트엔드 전용 확정 단계 비밀번호(간이 보호). */
 const COMMITTEE_CONFIRM_PASSWORD = '47392';
 
@@ -57,10 +60,34 @@ function getRowReactKey(row, index) {
   return `committee-req-${index}`;
 }
 
-function getDocumentOidString(row) {
+/** DELETE API용 Mongo 문서 _id 문자열 */
+function getDocumentIdString(row) {
   const id = row?._id;
   if (id && typeof id === 'object' && id.$oid != null) return String(id.$oid);
-  if (typeof id === 'string') return id;
+  if (typeof id === 'string' && id.trim()) return id.trim();
+  if (id != null) return String(id);
+  return null;
+}
+
+/** _id가 없을 때 삭제 대상으로 쓸 prime-key 문자열 */
+function getPrimeKeyString(row) {
+  const pk = row?.['prime-key'] ?? row?.prime_key;
+  if (pk == null || pk === '') return null;
+  const s = String(pk).trim();
+  return s || null;
+}
+
+/** 삭제 요청 body 및 로딩 중 행 매칭용 키 */
+function getDeleteAnchor(row) {
+  const oid = getDocumentIdString(row);
+  if (oid)
+    return { trackKey: `oid:${oid}`, payload: { _id: oid } };
+  const pk = getPrimeKeyString(row);
+  if (pk)
+    return {
+      trackKey: `pk:${pk}`,
+      payload: { 'prime-key': pk },
+    };
   return null;
 }
 
@@ -125,6 +152,7 @@ function CommitteeRequestsPage() {
 
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [committeeNameInput, setCommitteeNameInput] = useState('');
+  const [approvedByInput, setApprovedByInput] = useState('');
   const [confirmSubmitting, setConfirmSubmitting] = useState(false);
   const [confirmModalError, setConfirmModalError] = useState(null);
 
@@ -132,6 +160,11 @@ function CommitteeRequestsPage() {
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordModalError, setPasswordModalError] = useState(null);
   const [pendingConfirm, setPendingConfirm] = useState(null);
+
+  const [deletingKey, setDeletingKey] = useState(null);
+  const [selectedKeys, setSelectedKeys] = useState(() => new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const selectAllCheckboxRef = useRef(null);
 
   const committeeConfirmUrl = `${API_URL}${COMMITTEE_LIST_CONFIRM_PATH}`;
 
@@ -194,6 +227,64 @@ function CommitteeRequestsPage() {
     return getOrderedHeaders([...keys]);
   }, [sortedRows]);
 
+  const selectableTrackKeys = useMemo(
+    () =>
+      sortedRows
+        .map((row) => getDeleteAnchor(row)?.trackKey)
+        .filter(Boolean),
+    [sortedRows],
+  );
+
+  useEffect(() => {
+    const valid = new Set(selectableTrackKeys);
+    setSelectedKeys((prev) => {
+      const next = new Set();
+      let changed = false;
+      for (const k of prev) {
+        if (valid.has(k)) next.add(k);
+        else changed = true;
+      }
+      if (!changed && next.size === prev.size) return prev;
+      return next;
+    });
+  }, [selectableTrackKeys]);
+
+  const allSelectableSelected =
+    selectableTrackKeys.length > 0 &&
+    selectableTrackKeys.every((k) => selectedKeys.has(k));
+  const someSelectableSelected = selectableTrackKeys.some((k) =>
+    selectedKeys.has(k),
+  );
+  const hasBulkSelection =
+    selectableTrackKeys.length > 0 &&
+    selectableTrackKeys.some((k) => selectedKeys.has(k));
+
+  useEffect(() => {
+    const el = selectAllCheckboxRef.current;
+    if (!el) return;
+    el.indeterminate =
+      someSelectableSelected && !allSelectableSelected;
+  }, [someSelectableSelected, allSelectableSelected]);
+
+  const handleToggleSelectAll = useCallback(() => {
+    setSelectedKeys((prev) => {
+      if (selectableTrackKeys.length === 0) return prev;
+      const allOn = selectableTrackKeys.every((k) => prev.has(k));
+      if (allOn) return new Set();
+      return new Set(selectableTrackKeys);
+    });
+  }, [selectableTrackKeys]);
+
+  const handleToggleRowSelected = useCallback((trackKey) => {
+    if (!trackKey) return;
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(trackKey)) next.delete(trackKey);
+      else next.add(trackKey);
+      return next;
+    });
+  }, []);
+
   const handleDownloadCsv = useCallback(() => {
     if (sortedRows.length === 0) return;
     const csv = buildRequestsTableCsv(sortedRows, rowDataHeaders);
@@ -203,6 +294,7 @@ function CommitteeRequestsPage() {
   const openConfirmModal = useCallback(() => {
     setConfirmModalError(null);
     setCommitteeNameInput('');
+    setApprovedByInput('');
     setPasswordModalOpen(false);
     setPasswordInput('');
     setPasswordModalError(null);
@@ -224,6 +316,7 @@ function CommitteeRequestsPage() {
     setConfirmModalError(null);
     setPendingConfirm(null);
     setCommitteeNameInput('');
+    setApprovedByInput('');
   }, [confirmSubmitting, closePasswordModal]);
 
   useEffect(() => {
@@ -250,21 +343,24 @@ function CommitteeRequestsPage() {
       );
       return;
     }
-    const documentIds = sortedRows
-      .map((row) => getDocumentOidString(row))
-      .filter((id) => id != null && id !== '');
-    if (documentIds.length !== sortedRows.length) {
-      setConfirmModalError(
-        '일부 행에 MongoDB 문서 ID(_id)가 없어 일괄 수정을 보낼 수 없습니다.',
-      );
+
+    const approvedBy = approvedByInput.trim();
+    if (!approvedBy) {
+      setConfirmModalError('승인자 이름을 입력해 주세요.');
       return;
     }
+
     setConfirmModalError(null);
-    setPendingConfirm({ committee_status: name, document_ids: documentIds });
+
+    setPendingConfirm({
+      new_status: name,
+      approved_by: approvedBy,
+    });
+
     setPasswordInput('');
     setPasswordModalError(null);
     setPasswordModalOpen(true);
-  }, [committeeNameInput, sortedRows]);
+  }, [committeeNameInput, approvedByInput]);
 
   const submitAfterPassword = useCallback(async () => {
     if (passwordInput !== COMMITTEE_CONFIRM_PASSWORD) {
@@ -288,6 +384,7 @@ function CommitteeRequestsPage() {
       setPendingConfirm(null);
       setConfirmModalOpen(false);
       setCommitteeNameInput('');
+      setApprovedByInput('');
       await fetchList();
     } catch (err) {
       console.error('투심위 상태 일괄 변경 오류:', err);
@@ -301,6 +398,93 @@ function CommitteeRequestsPage() {
       setConfirmSubmitting(false);
     }
   }, [committeeConfirmUrl, fetchList, passwordInput, pendingConfirm]);
+
+  const handleDeleteRow = useCallback(
+    async (row) => {
+      const anchor = getDeleteAnchor(row);
+      if (!anchor) {
+        window.alert(
+          '문서 _id 또는 prime-key를 찾을 수 없어 삭제할 수 없습니다.',
+        );
+        return;
+      }
+      if (
+        !window.confirm('이 행을 데이터베이스에서 삭제할까요? 이 작업은 되돌릴 수 없습니다.')
+      ) {
+        return;
+      }
+      setDeletingKey(anchor.trackKey);
+      try {
+        await axios.delete(committeeListUrl, {
+          headers: { 'Content-Type': 'application/json' },
+          data: anchor.payload,
+        });
+        await fetchList();
+      } catch (err) {
+        console.error('투심위 요청 삭제 오류:', err);
+        window.alert(
+          err.response?.data?.error ??
+            err.response?.data?.message ??
+            err.message ??
+            '삭제 요청에 실패했습니다.',
+        );
+      } finally {
+        setDeletingKey(null);
+      }
+    },
+    [committeeListUrl, fetchList],
+  );
+
+  const handleBulkDeleteSelected = useCallback(async () => {
+    const targets = sortedRows.filter((row) => {
+      const a = getDeleteAnchor(row);
+      return a != null && selectedKeys.has(a.trackKey);
+    });
+    if (targets.length === 0) {
+      window.alert('삭제할 행을 선택해 주세요.');
+      return;
+    }
+    if (
+      !window.confirm(
+        `선택한 ${targets.length}건을 데이터베이스에서 삭제할까요? 이 작업은 되돌릴 수 없습니다.`,
+      )
+    ) {
+      return;
+    }
+
+    setBulkDeleting(true);
+    const errors = [];
+    try {
+      for (const row of targets) {
+        const anchor = getDeleteAnchor(row);
+        if (!anchor) continue;
+        try {
+          await axios.delete(committeeListUrl, {
+            headers: { 'Content-Type': 'application/json' },
+            data: anchor.payload,
+          });
+        } catch (err) {
+          errors.push(
+            err.response?.data?.error ??
+              err.response?.data?.message ??
+              err.message ??
+              '알 수 없는 오류',
+          );
+        }
+      }
+      setSelectedKeys(new Set());
+      await fetchList();
+      if (errors.length > 0) {
+        window.alert(
+          `일부 삭제에 실패했습니다. (${errors.length}건)\n${errors
+            .slice(0, 3)
+            .join('\n')}${errors.length > 3 ? '\n…' : ''}`,
+        );
+      }
+    } finally {
+      setBulkDeleting(false);
+    }
+  }, [committeeListUrl, fetchList, selectedKeys, sortedRows]);
 
   return (
     <div className='invest-rev-sub-page invest-rev-request'>
@@ -333,86 +517,201 @@ function CommitteeRequestsPage() {
         </div>
       )}
 
-      {loading && rows.length === 0 && !error ? (
-        <p className='invest-rev-request__loading'>목록을 불러오는 중입니다…</p>
-      ) : sortedRows.length === 0 ? (
-        <p className='invest-rev-request__empty'>
-          표시할 요청이 없습니다. API 응답이 배열(또는 <code>data</code> /{' '}
-          <code>results</code> 배열)인지 확인하세요.
-        </p>
-      ) : (
-        <div className='invest-rev-request__panel'>
-          <div className='invest-rev-request__modal-header'>
-            <h2
-              className='invest-rev-request__panel-title'
-              style={{ margin: 0 }}
-            >
-              요청 목록 ({sortedRows.length}건)
-            </h2>
-            <button
-              type='button'
-              className='invest-rev-request__btn invest-rev-request__btn--secondary'
-              onClick={handleDownloadCsv}
-            >
-              CSV 다운로드
-            </button>
-          </div>
-          <div className='invest-rev-request__table-wrap'>
-            <table className='invest-rev-request__table'>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  {META_COLUMNS.map((col) => (
-                    <th key={col.key}>{col.label}</th>
-                  ))}
-                  {rowDataHeaders.map((h) => (
-                    <th key={`rd-${h}`} title={h}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sortedRows.map((row, idx) => {
-                  const rd =
-                    row?.row_data && typeof row.row_data === 'object'
-                      ? row.row_data
-                      : {};
-                  return (
-                    <tr key={getRowReactKey(row, idx)}>
-                      <td>{idx + 1}</td>
-                      {META_COLUMNS.map((col) => (
-                        <td key={col.key}>{formatCellValue(row?.[col.key])}</td>
-                      ))}
-                      {rowDataHeaders.map((h) => (
-                        <td key={h} title={formatCellValue(rd[h])}>
-                          {formatCellValue(rd[h])}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              marginTop: '1rem',
-            }}
+      <div className='invest-rev-request__panel'>
+        <div className='invest-rev-request__modal-header'>
+          <h2
+            className='invest-rev-request__panel-title'
+            style={{ margin: 0 }}
           >
-            <button
-              type='button'
-              className='invest-rev-request__btn invest-rev-request__btn--primary'
-              onClick={openConfirmModal}
-              disabled={loading}
-            >
-              투심위 리스트 확정
-            </button>
-          </div>
+            요청 목록 ({sortedRows.length}건)
+            {loading && rows.length === 0 ? (
+              <span style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
+                · 불러오는 중…
+              </span>
+            ) : null}
+          </h2>
+          <button
+            type='button'
+            className='invest-rev-request__btn invest-rev-request__btn--secondary'
+            onClick={handleDownloadCsv}
+            disabled={sortedRows.length === 0}
+          >
+            CSV 다운로드
+          </button>
         </div>
-      )}
+        <div className='invest-rev-request__table-wrap'>
+          <table className='invest-rev-request__table invest-rev-request__table--committee-requests'>
+            <thead>
+              <tr>
+                <th
+                  className='invest-rev-request__th--committee-select'
+                  scope='col'
+                >
+                  <input
+                    ref={selectAllCheckboxRef}
+                    type='checkbox'
+                    className='invest-rev-request__row-radio'
+                    checked={allSelectableSelected}
+                    onChange={handleToggleSelectAll}
+                    disabled={
+                      selectableTrackKeys.length === 0 ||
+                      loading ||
+                      bulkDeleting
+                    }
+                    aria-label='전체 선택'
+                  />
+                </th>
+                <th>#</th>
+                {META_COLUMNS.map((col) => (
+                  <th key={col.key}>{col.label}</th>
+                ))}
+                {rowDataHeaders.map((h) => (
+                  <th key={`rd-${h}`} title={h}>
+                    {h}
+                  </th>
+                ))}
+                <th
+                  className='invest-rev-request__th--committee-actions'
+                  scope='col'
+                >
+                  삭제
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedRows.length > 0
+                ? sortedRows.map((row, idx) => {
+                    const rd =
+                      row?.row_data && typeof row.row_data === 'object'
+                        ? row.row_data
+                        : {};
+                    const deleteAnchor = getDeleteAnchor(row);
+                    const deleteTrackKey = deleteAnchor?.trackKey ?? null;
+                    const isDeleting =
+                      deleteTrackKey != null &&
+                      deletingKey === deleteTrackKey;
+                    const isRowSelected =
+                      deleteTrackKey != null &&
+                      selectedKeys.has(deleteTrackKey);
+                    return (
+                      <tr
+                        key={getRowReactKey(row, idx)}
+                        className={
+                          isRowSelected
+                            ? 'invest-rev-request__row--selected'
+                            : undefined
+                        }
+                      >
+                        <td className='invest-rev-request__td--committee-select'>
+                          <input
+                            type='checkbox'
+                            className='invest-rev-request__row-radio'
+                            checked={Boolean(
+                              deleteTrackKey &&
+                                selectedKeys.has(deleteTrackKey),
+                            )}
+                            onChange={() =>
+                              handleToggleRowSelected(deleteTrackKey)
+                            }
+                            disabled={
+                              !deleteTrackKey ||
+                              loading ||
+                              bulkDeleting ||
+                              isDeleting
+                            }
+                            aria-label={`행 ${idx + 1} 선택`}
+                          />
+                        </td>
+                        <td>{idx + 1}</td>
+                        {META_COLUMNS.map((col) => (
+                          <td key={col.key}>
+                            {formatCellValue(row?.[col.key])}
+                          </td>
+                        ))}
+                        {rowDataHeaders.map((h) => (
+                          <td key={h} title={formatCellValue(rd[h])}>
+                            {formatCellValue(rd[h])}
+                          </td>
+                        ))}
+                        <td className='invest-rev-request__td--committee-actions'>
+                          <button
+                            type='button'
+                            className='invest-rev-request__btn invest-rev-request__btn--remove invest-rev-request__btn--committee-delete'
+                            aria-label='행 삭제'
+                            disabled={
+                              !deleteTrackKey ||
+                              loading ||
+                              bulkDeleting ||
+                              isDeleting
+                            }
+                            onClick={() => void handleDeleteRow(row)}
+                          >
+                            {isDeleting ? '삭제 중…' : '삭제'}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                : Array.from(
+                    { length: EMPTY_TABLE_PLACEHOLDER_ROWS },
+                    (_, i) => (
+                      <tr
+                        key={`committee-req-placeholder-${i}`}
+                        className='invest-rev-request__tr--committee-placeholder'
+                      >
+                        <td
+                          className='invest-rev-request__td--committee-select'
+                        >
+                          &#160;
+                        </td>
+                        <td>&#160;</td>
+                        {META_COLUMNS.map((col) => (
+                          <td key={col.key}>&#160;</td>
+                        ))}
+                        {rowDataHeaders.map((h) => (
+                          <td key={h}>&#160;</td>
+                        ))}
+                        <td
+                          className='invest-rev-request__td--committee-actions'
+                        >
+                          &#160;
+                        </td>
+                      </tr>
+                    ),
+                  )}
+            </tbody>
+          </table>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+            marginTop: '1rem',
+          }}
+        >
+          <button
+            type='button'
+            className='invest-rev-request__btn invest-rev-request__btn--secondary invest-rev-request__btn--committee-bulk-delete'
+            onClick={() => void handleBulkDeleteSelected()}
+            disabled={
+              !hasBulkSelection || loading || bulkDeleting || sortedRows.length === 0
+            }
+          >
+            {bulkDeleting ? '선택 삭제 중…' : '선택 삭제'}
+          </button>
+          <button
+            type='button'
+            className='invest-rev-request__btn invest-rev-request__btn--primary'
+            onClick={openConfirmModal}
+            disabled={loading || bulkDeleting}
+          >
+            투심위 리스트 확정
+          </button>
+        </div>
+      </div>
 
       {confirmModalOpen ? (
         <div
@@ -466,6 +765,28 @@ function CommitteeRequestsPage() {
                 placeholder="'26년 6월 (예비) 투심위"
                 onChange={(e) => {
                   setCommitteeNameInput(e.target.value);
+                  if (confirmModalError) setConfirmModalError(null);
+                }}
+                disabled={confirmSubmitting || passwordModalOpen}
+              />
+            </div>
+
+            <div className='invest-rev-request__form-group'>
+              <label
+                className='invest-rev-request__label'
+                htmlFor='committee-list-approved-by'
+              >
+                승인자
+              </label>
+              <input
+                id='committee-list-approved-by'
+                type='text'
+                className='invest-rev-request__input'
+                autoComplete='name'
+                value={approvedByInput}
+                placeholder='승인자 이름'
+                onChange={(e) => {
+                  setApprovedByInput(e.target.value);
                   if (confirmModalError) setConfirmModalError(null);
                 }}
                 disabled={confirmSubmitting || passwordModalOpen}

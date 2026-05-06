@@ -4,6 +4,7 @@ import '../styles/pages/CommitteePage.css';
 const TAB_ROUTES = [
   { path: 'overview', label: '투심위 생성' },
   { path: 'requests', label: '투심위 생성 현황' },
+  { path: 'history-list', label: '투심위 리스트' },
 ];
 
 function CommitteePage() {

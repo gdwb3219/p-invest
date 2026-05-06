@@ -71,6 +71,8 @@ function parseCsvLine(line) {
   let current = '';
   let inQuotes = false;
 
+  console.log(line, 'linelineline');
+
   for (let i = 0; i < line.length; i += 1) {
     const char = line[i];
     if (char === '"') {
