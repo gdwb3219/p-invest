@@ -116,7 +116,7 @@
   white-space: nowrap;
 }
 
-.history-table th:last-child {
+.history-table th:last-child:not(.history-col-reason) {
   border-right: none;
 }
 
@@ -146,16 +146,21 @@
 }
 
 .history-table td {
-  padding: 0.45rem 0.55rem;
+  padding: 0.15rem 0.4rem;
   border-bottom: 1px solid #eef0f4;
   white-space: nowrap;
+  height: 30px;
+  max-height: 30px;
+  line-height: 1.2;
+  vertical-align: middle;
+  box-sizing: border-box;
 }
 
 .history-table tbody tr {
   cursor: pointer;
 }
 
-.history-table tbody tr:hover {
+.history-table tbody tr:hover td {
   background-color: #f9fafb;
 }
 
@@ -167,12 +172,14 @@
   background-color: transparent;
 }
 
-.history-table tbody tr.history-row-selected {
-  background-color: rgba(111, 140, 255, 0.12);
+.history-table tbody tr.history-row-selected td,
+.history-table tbody tr.history-row-selected .history-row-num {
+  background-color: #e8ecff;
 }
 
-.history-table tbody tr.history-row-selected:hover {
-  background-color: rgba(111, 140, 255, 0.18);
+.history-table tbody tr.history-row-selected:hover td,
+.history-table tbody tr.history-row-selected:hover .history-row-num {
+  background-color: #dfe6ff;
 }
 
 .history-table tbody tr:last-child td {
@@ -267,9 +274,14 @@
 }
 
 .history-accordion-table td {
-  padding: 0.4rem 0.55rem;
+  padding: 0.15rem 0.4rem;
   border-bottom: 1px solid #eef0f4;
   white-space: nowrap;
+  height: 30px;
+  max-height: 30px;
+  line-height: 1.2;
+  vertical-align: middle;
+  box-sizing: border-box;
 }
 
 .history-accordion-table .history-accordion-td-num {
@@ -281,4 +293,149 @@
 
 .history-accordion-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* 변경사유 — 오른쪽 고정 컬럼 (불투명 배경) */
+.history-table .history-col-reason,
+.history-accordion-table .history-col-reason {
+  position: sticky;
+  right: 0;
+  min-width: 240px;
+  width: 240px;
+  max-width: 280px;
+  white-space: nowrap;
+  vertical-align: middle;
+  border-left: 1px solid #e5e7eb;
+  box-shadow: -3px 0 6px rgba(42, 45, 51, 0.08);
+  padding: 0 0.3rem;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.history-table thead .history-col-reason {
+  background-color: #f3f4f7;
+  z-index: 12;
+  color: #374151;
+}
+
+.history-table tbody .history-col-reason {
+  background-color: #ffffff;
+  z-index: 6;
+}
+
+.history-table tbody tr:hover .history-col-reason {
+  background-color: #f9fafb;
+}
+
+.history-table tbody tr.history-row-selected .history-col-reason {
+  background-color: #e8ecff;
+}
+
+.history-table tbody tr.history-row-selected:hover .history-col-reason {
+  background-color: #dfe6ff;
+}
+
+.history-accordion-table .history-col-reason {
+  background-color: #fafbfc;
+  z-index: 4;
+}
+
+.history-reason-cell {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  height: 100%;
+  min-height: 26px;
+  padding: 1px 0;
+  background-color: inherit;
+  box-sizing: border-box;
+}
+
+.history-reason-textarea {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 20px;
+  min-height: 20px;
+  max-height: 20px;
+  margin: 0;
+  padding: 1px 4px;
+  border: 1px solid #d8dce3;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-family: inherit;
+  line-height: 18px;
+  resize: none;
+  overflow: hidden;
+  color: #2a2d33;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.history-reason-textarea:focus {
+  outline: none;
+  border-color: rgba(90, 111, 214, 0.65);
+  box-shadow: 0 0 0 1px rgba(111, 140, 255, 0.25);
+}
+
+.history-reason-textarea--error {
+  border-color: #f87171;
+}
+
+.history-reason-textarea:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background-color: #f3f4f6;
+}
+
+.history-reason-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.history-reason-btn {
+  padding: 0.1rem 0.35rem;
+  height: 20px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition:
+    filter 0.2s,
+    opacity 0.2s;
+}
+
+.history-reason-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.history-reason-btn--save {
+  border-color: rgba(90, 111, 214, 0.5);
+  background: linear-gradient(135deg, #6f8cff, #5a6fd6);
+  color: #fff;
+}
+
+.history-reason-btn--save:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.history-reason-btn--delete {
+  border-color: #d8dce3;
+  background-color: #ffffff;
+  color: #6b7280;
+}
+
+.history-reason-btn--delete:hover:not(:disabled) {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
 }

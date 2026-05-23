@@ -8,11 +8,17 @@ import {
 } from 'react';
 import axios from 'axios';
 import { useApiUrl } from '../contexts/ApiUrlContext';
+import HistoryChangeReasonCell from './HistoryPage/components/HistoryChangeReasonCell';
+import {
+  CHANGE_REASON_COLUMN,
+  getRowImportId,
+  getRowPrimeKey,
+  splitHeaders,
+} from './HistoryPage/historyReasonUtils';
 import '../styles/pages/HistoryPage.css';
 
 const SAP_HIS_TEST_PATH = '/sap-his-data/test';
 const SAP_HIS_BASE_PATH = '/sap-his-data';
-const PRIMEKEY_QUERY_PARAM = 'prime-key';
 
 const KEY_FIRST = ['구분0 (사업명)', '구분0 순번'];
 const getOrderedHeaders = (headers) => {
@@ -24,10 +30,16 @@ const getOrderedHeaders = (headers) => {
 
 const PRIMEKEY_COLUMN = 'prime-key';
 
+const patchRowChangeReason = (row, value) => ({
+  ...row,
+  [CHANGE_REASON_COLUMN]: value,
+});
+
 function HistoryPage() {
   const { API_URL } = useApiUrl();
   const LATEST_API_URL = `${API_URL}${SAP_HIS_TEST_PATH}`;
   const API_BASE = `${API_URL}${SAP_HIS_BASE_PATH}`;
+
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -66,48 +78,51 @@ function HistoryPage() {
     fetchLatestData();
   }, [fetchLatestData]);
 
-  const fetchHistory = useCallback((primeKey) => {
-    const key = String(primeKey);
-    setHistoryByPrimeKey((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], loading: true, error: null },
-    }));
-    axios
-      .get(`${API_BASE}/by-primekey`, {
-        params: { [PRIMEKEY_QUERY_PARAM]: primeKey },
-      })
-      .then((res) => {
-        const raw = res.data;
-        const list = Array.isArray(raw)
-          ? raw
-          : (raw?.data ??
-            raw?.results ??
-            raw?.sap_his_data ??
-            [raw].filter(Boolean));
-        setHistoryByPrimeKey((prev) => ({
-          ...prev,
-          [key]: {
-            rows: Array.isArray(list) ? list : [],
-            loading: false,
-            error: null,
-          },
-        }));
-      })
-      .catch((err) => {
-        console.error('PrimeKey 이력 조회 오류:', err);
-        setHistoryByPrimeKey((prev) => ({
-          ...prev,
-          [key]: {
-            rows: [],
-            loading: false,
-            error:
-              err.response?.data?.message ??
-              err.message ??
-              '해당 PrimeKey의 이력을 불러오지 못했습니다.',
-          },
-        }));
-      });
-  }, [API_BASE]);
+  const fetchHistory = useCallback(
+    (primeKey) => {
+      const key = String(primeKey);
+      setHistoryByPrimeKey((prev) => ({
+        ...prev,
+        [key]: { ...prev[key], loading: true, error: null },
+      }));
+      axios
+        .get(`${API_BASE}/by-primekey`, {
+          params: { 'prime-key': primeKey },
+        })
+        .then((res) => {
+          const raw = res.data;
+          const list = Array.isArray(raw)
+            ? raw
+            : (raw?.data ??
+              raw?.results ??
+              raw?.sap_his_data ??
+              [raw].filter(Boolean));
+          setHistoryByPrimeKey((prev) => ({
+            ...prev,
+            [key]: {
+              rows: Array.isArray(list) ? list : [],
+              loading: false,
+              error: null,
+            },
+          }));
+        })
+        .catch((err) => {
+          console.error('PrimeKey 이력 조회 오류:', err);
+          setHistoryByPrimeKey((prev) => ({
+            ...prev,
+            [key]: {
+              rows: [],
+              loading: false,
+              error:
+                err.response?.data?.message ??
+                err.message ??
+                '해당 PrimeKey의 이력을 불러오지 못했습니다.',
+            },
+          }));
+        });
+    },
+    [API_BASE],
+  );
 
   const toggleExpand = useCallback(
     (primeKey) => {
@@ -120,11 +135,38 @@ function HistoryPage() {
     [historyByPrimeKey, fetchHistory],
   );
 
-  const headers =
-    data.length > 0 ? getOrderedHeaders(Object.keys(data[0])) : [];
-  const colSpan = headers.length + 1;
+  const handleMainReasonSaved = useCallback((rowIndex, value) => {
+    setData((prev) =>
+      prev.map((row, i) =>
+        i === rowIndex ? patchRowChangeReason(row, value) : row,
+      ),
+    );
+  }, []);
 
-  // 아코디언이 닫혀 있을 때만 열 너비 측정 (펼친 뒤 측정하면 이미 넓어진 테이블 기준으로 잡혀 계속 넓어짐)
+  const handleHistoryReasonSaved = useCallback(
+    (primeKeyStr, historyIndex, value) => {
+      setHistoryByPrimeKey((prev) => {
+        const entry = prev[primeKeyStr];
+        if (!entry?.rows) return prev;
+        return {
+          ...prev,
+          [primeKeyStr]: {
+            ...entry,
+            rows: entry.rows.map((row, i) =>
+              i === historyIndex ? patchRowChangeReason(row, value) : row,
+            ),
+          },
+        };
+      });
+    },
+    [],
+  );
+
+  const allHeaders =
+    data.length > 0 ? getOrderedHeaders(Object.keys(data[0])) : [];
+  const { dataHeaders, hasReasonColumn } = splitHeaders(allHeaders);
+  const colSpan = dataHeaders.length + 1 + (hasReasonColumn ? 1 : 0);
+
   useLayoutEffect(() => {
     if (!tableRef.current || data.length === 0 || expandedPrimeKey !== null)
       return;
@@ -132,7 +174,25 @@ function HistoryPage() {
     if (ths.length) {
       setColumnWidths(Array.from(ths).map((th) => th.offsetWidth));
     }
-  }, [data.length, expandedPrimeKey]);
+  }, [data.length, expandedPrimeKey, hasReasonColumn]);
+
+  const renderReasonHeader = () =>
+    hasReasonColumn ? (
+      <th className='history-col-reason'>{CHANGE_REASON_COLUMN}</th>
+    ) : null;
+
+  const renderReasonCell = (row, onSaved, primeKeyFallback) =>
+    hasReasonColumn ? (
+      <td className='history-col-reason'>
+        <HistoryChangeReasonCell
+          key={`${getRowImportId(row)}-${getRowPrimeKey(row, primeKeyFallback)}`}
+          row={row}
+          apiBase={API_BASE}
+          primeKeyFallback={primeKeyFallback}
+          onSaved={onSaved}
+        />
+      </td>
+    ) : null;
 
   return (
     <div className='page-container'>
@@ -173,9 +233,10 @@ function HistoryPage() {
                 <thead>
                   <tr>
                     <th className='history-row-num history-th-expand'>#</th>
-                    {headers.map((h, i) => (
+                    {dataHeaders.map((h, i) => (
                       <th key={i}>{h}</th>
                     ))}
+                    {renderReasonHeader()}
                   </tr>
                 </thead>
                 <tbody>
@@ -210,9 +271,12 @@ function HistoryPage() {
                             </span>
                             {rowIndex + 1}
                           </td>
-                          {headers.map((header, colIndex) => (
+                          {dataHeaders.map((header, colIndex) => (
                             <td key={colIndex}>{row[header] ?? ''}</td>
                           ))}
+                          {renderReasonCell(row, (value) =>
+                            handleMainReasonSaved(rowIndex, value),
+                          )}
                         </tr>
                         <tr
                           className={`history-accordion-row ${isExpanded ? 'history-accordion-row--open' : ''}`}
@@ -266,11 +330,21 @@ function HistoryPage() {
                                                 <td className='history-accordion-td-num'>
                                                   {i + 1}
                                                 </td>
-                                                {headers.map((header) => (
+                                                {dataHeaders.map((header) => (
                                                   <td key={header}>
                                                     {hisRow[header] ?? ''}
                                                   </td>
                                                 ))}
+                                                {renderReasonCell(
+                                                  hisRow,
+                                                  (value) =>
+                                                    handleHistoryReasonSaved(
+                                                      keyStr,
+                                                      i,
+                                                      value,
+                                                    ),
+                                                  keyStr,
+                                                )}
                                               </tr>
                                             ))}
                                           </tbody>
