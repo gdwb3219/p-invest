@@ -595,36 +595,40 @@ function TestPage() {
             aria-label='테이블 비교 구간'
           >
             <div className='revision-selector'>
-              <RevSelector
-                label='기준 Revision'
-                id='revision1'
-                value={selectedRevision1}
-                onChange={handleRevision1Change}
-                revisions={revisions}
-                disabled={loadingRevisions || loading}
-              />
+              <div className='revision-selectors-row'>
+                <RevSelector
+                  label='기준 Revision'
+                  id='revision1'
+                  value={selectedRevision1}
+                  onChange={handleRevision1Change}
+                  revisions={revisions}
+                  disabled={loadingRevisions || loading}
+                />
 
-              <RevSelector
-                label='비교 Revision'
-                id='revision2'
-                value={selectedRevision2}
-                onChange={handleRevision2Change}
-                revisions={revisions}
-                disabled={loadingRevisions || loading}
-              />
+                <RevSelector
+                  label='비교 Revision'
+                  id='revision2'
+                  value={selectedRevision2}
+                  onChange={handleRevision2Change}
+                  revisions={revisions}
+                  disabled={loadingRevisions || loading}
+                />
+              </div>
 
-              <button
-                onClick={fetchData}
-                className='query-btn'
-                disabled={
-                  loading ||
-                  loadingRevisions ||
-                  !selectedRevision1 ||
-                  !selectedRevision2
-                }
-              >
-                {loading ? '로딩 중...' : '조회'}
-              </button>
+              <div className='revision-query-row'>
+                <button
+                  onClick={fetchData}
+                  className='query-btn'
+                  disabled={
+                    loading ||
+                    loadingRevisions ||
+                    !selectedRevision1 ||
+                    !selectedRevision2
+                  }
+                >
+                  {loading ? '로딩 중...' : '조회'}
+                </button>
+              </div>
             </div>
 
             {loadingRevisions && (
