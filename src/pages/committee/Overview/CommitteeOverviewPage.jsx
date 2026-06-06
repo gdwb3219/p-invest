@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useSessionStorage } from '../../../hooks/useCustomHooks';
 import { useApiUrl } from '../../../contexts/ApiUrlContext';
@@ -25,15 +26,38 @@ import {
 } from './overviewUtils';
 
 const INVEST_PROJECT_NAME_COL = '투자사업명';
+const COMMITTEE_LIST_QUERY_KEY = 'committee_create_list';
 
 function CommitteeOverviewPage() {
   const { API_URL } = useApiUrl();
   const COMMITTEE_CREATE_LIST_URL = `${API_URL}${COMMITTEE_CREATE_LIST_PATH}`;
   const COMMITTEE_APPROVAL_POST_URL = `${API_URL}${COMMITTEE_APPROVAL_POST_PATH}`;
+  const queryClient = useQueryClient();
 
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const {
+    data: rows = [],
+    isFetching: loading,
+    error: listError,
+    refetch: refetchCommitteeList,
+  } = useQuery({
+    queryKey: [COMMITTEE_LIST_QUERY_KEY, COMMITTEE_CREATE_LIST_URL],
+    queryFn: async () => {
+      try {
+        const res = await axios.get(COMMITTEE_CREATE_LIST_URL);
+        return normalizeRows(res.data);
+      } catch (err) {
+        console.error('투심위 목록 조회 오류:', err);
+        throw err;
+      }
+    },
+  });
+
+  const error = listError
+    ? (listError.response?.data?.message ??
+      listError.response?.data?.error ??
+      listError.message ??
+      '투심위 생성 목록을 불러오지 못했습니다.')
+    : null;
 
   const [sourceSelectedKeys, setSourceSelectedKeys] = useState(() => new Set());
   const [stagedSelectedKeys, setStagedSelectedKeys] = useState(() => new Set());
@@ -42,7 +66,6 @@ function CommitteeOverviewPage() {
     [],
   );
 
-  const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitMessage, setSubmitMessage] = useState(null);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
@@ -71,30 +94,6 @@ function CommitteeOverviewPage() {
   const dragTableTypeRef = useRef(null); // "source" | "staged"
   const pendingManualFocusRef = useRef(null);
   const csvFileInputRef = useRef(null);
-
-  const fetchCommitteeList = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await axios.get(COMMITTEE_CREATE_LIST_URL);
-      setRows(normalizeRows(res.data));
-    } catch (err) {
-      console.error('투심위 목록 조회 오류:', err);
-      setError(
-        err.response?.data?.message ??
-          err.response?.data?.error ??
-          err.message ??
-          '투심위 생성 목록을 불러오지 못했습니다.',
-      );
-      setRows([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [COMMITTEE_CREATE_LIST_URL]);
-
-  useEffect(() => {
-    void fetchCommitteeList();
-  }, [fetchCommitteeList]);
 
   const headers = useMemo(() => {
     const fromRows = rows.length > 0 ? Object.keys(rows[0]) : [];
@@ -351,6 +350,34 @@ function CommitteeOverviewPage() {
     setCsvDragOver(false);
     setClearStagingModalOpen(false);
   }, [setStagedRows]);
+
+  const approveMutation = useMutation({
+    mutationFn: async (payload) => {
+      await axios.post(COMMITTEE_APPROVAL_POST_URL, payload, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return payload.requests.length;
+    },
+    onSuccess: (requestCount) => {
+      setSubmitMessage(`${requestCount}건 승인 요청이 저장되었습니다.`);
+      setApproveModalOpen(false);
+      clearStaging();
+      void queryClient.invalidateQueries({
+        queryKey: [COMMITTEE_LIST_QUERY_KEY],
+      });
+    },
+    onError: (err) => {
+      console.error('승인 요청 저장 오류:', err);
+      setSubmitError(
+        err.response?.data?.error ??
+          err.response?.data?.message ??
+          err.message ??
+          '승인 요청 저장에 실패했습니다.',
+      );
+    },
+  });
+
+  const submitting = approveMutation.isPending;
 
   const closeCsvUploadModal = useCallback(() => {
     setCsvUploadModalOpen(false);
@@ -658,7 +685,7 @@ function CommitteeOverviewPage() {
   }, []);
 
   // 투심위 승인 요청
-  const handleApproveRequest = useCallback(async () => {
+  const handleApproveRequest = useCallback(() => {
     if (stagedRows.length === 0 || submitting) return;
     if (missingApproveReasonKeys.length > 0) {
       setApproveValidationMessage('요청 사유를 입력해주세요.');
@@ -668,46 +695,27 @@ function CommitteeOverviewPage() {
       setApproveValidationMessage('승인 요청자를 입력해주세요.');
       return;
     }
-    setSubmitting(true);
     setSubmitError(null);
     setSubmitMessage(null);
     setApproveValidationMessage(null);
-    try {
-      const trimmedRequester = approveRequesterName.trim();
-      const payload = {
-        requests: stagedRows.map((entry) => ({
-          prime_key: getPrimeKey(entry?.row, entry?.rowKey),
-          row_key: entry.rowKey,
-          row_data: entry.row,
-          approve_reason: (approveReasons[String(entry?.rowKey)] ?? '').trim(),
-          approve_requester: trimmedRequester,
-        })),
-      };
-      await axios.post(COMMITTEE_APPROVAL_POST_URL, payload, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      setSubmitMessage(`${stagedRows.length}건 승인 요청이 저장되었습니다.`);
-      setApproveModalOpen(false);
-      clearStaging();
-    } catch (err) {
-      console.error('승인 요청 저장 오류:', err);
-      setSubmitError(
-        err.response?.data?.error ??
-          err.response?.data?.message ??
-          err.message ??
-          '승인 요청 저장에 실패했습니다.',
-      );
-    } finally {
-      setSubmitting(false);
-    }
+    const trimmedRequester = approveRequesterName.trim();
+    const payload = {
+      requests: stagedRows.map((entry) => ({
+        prime_key: getPrimeKey(entry?.row, entry?.rowKey),
+        row_key: entry.rowKey,
+        row_data: entry.row,
+        approve_reason: (approveReasons[String(entry?.rowKey)] ?? '').trim(),
+        approve_requester: trimmedRequester,
+      })),
+    };
+    approveMutation.mutate(payload);
   }, [
     stagedRows,
     submitting,
     missingApproveReasonKeys.length,
-    COMMITTEE_APPROVAL_POST_URL,
     approveReasons,
     approveRequesterName,
-    clearStaging,
+    approveMutation,
   ]);
 
   return (
@@ -724,7 +732,7 @@ function CommitteeOverviewPage() {
         <button
           type='button'
           className='invest-rev-request__btn invest-rev-request__btn--secondary'
-          onClick={() => void fetchCommitteeList()}
+          onClick={() => void refetchCommitteeList()}
           disabled={loading}
         >
           {loading ? '불러오는 중…' : '목록 새로고침'}

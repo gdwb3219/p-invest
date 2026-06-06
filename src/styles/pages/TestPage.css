@@ -228,6 +228,18 @@ body.test-page-scroll-snap {
   font-size: 0.8rem;
 }
 
+.table-selection-hint {
+  grid-column: 1 / -1;
+  margin: 0 0 0.25rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  background: #eef2ff;
+  border: 1px solid rgba(90, 111, 214, 0.25);
+  color: #4b5563;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
 .table-section {
   background: #fafbfc;
   border-radius: 10px;
@@ -257,14 +269,19 @@ body.test-page-scroll-snap {
   max-width: 100%;
   max-height: min(52vh, 520px);
   box-sizing: border-box;
+  cursor: default;
 }
 
-/* 테이블 1/2: 윈도우 기본 파란 드래그 선택 비활성화 */
+/* 테이블 1/2: 행 선택 시 텍스트 드래그 방지 */
 .table-wrapper .data-table {
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+.data-table tbody tr {
+  cursor: pointer;
 }
 
 .data-table {
@@ -342,13 +359,17 @@ body.test-page-scroll-snap {
   border-bottom: none;
 }
 
-/* 드래그로 선택한 셀 하이라이트 */
-.data-table .cell-selected {
+/* 행 선택 하이라이트 */
+.data-table tbody tr.row-selected td {
+  background-color: rgba(111, 140, 255, 0.22) !important;
+}
+
+.data-table tbody tr.row-selected td.row-num-column {
   background-color: rgba(111, 140, 255, 0.28) !important;
 }
 
-.data-table .cell-selected.cell-different {
-  background-color: rgba(111, 140, 255, 0.4) !important;
+.data-table tbody tr.row-selected td.cell-different {
+  background-color: rgba(111, 140, 255, 0.35) !important;
 }
 
 /* 차이가 있는 셀 하이라이트 */
@@ -376,6 +397,12 @@ body.test-page-scroll-snap {
   font-size: 0.95rem;
   font-weight: 600;
   text-align: center;
+}
+
+.comparison-filter-badge {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #5a6fd6;
 }
 
 .changes-table-wrapper {
@@ -591,6 +618,15 @@ body.test-page-scroll-snap {
   font-size: 0.95rem;
   color: #047857;
   font-weight: 600;
+}
+
+.no-changes-message--filter {
+  background: #fffbeb;
+  border-color: #fcd34d;
+}
+
+.no-changes-message--filter p {
+  color: #b45309;
 }
 
 @media (max-width: 1024px) {

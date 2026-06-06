@@ -40,9 +40,11 @@ function TestPage() {
   const table2Ref = useRef(null);
   const tablesContainerRef = useRef(null);
   const isScrollingRef = useRef(false);
-  /** 드래그 선택: { tableId: 1|2, startRow, startCol, endRow, endCol } */
-  const [selection, setSelection] = useState(null);
-  const selectionStartRef = useRef(null);
+  /** prime_key 기준 비교 결과 필터 (비어 있으면 전체 표시) */
+  const [selectedPrimeKeys, setSelectedPrimeKeys] = useState(() => new Set());
+  const rowDragStartIndexRef = useRef(null);
+  const rowDragTableIdRef = useRef(null);
+  const isRowDraggingRef = useRef(false);
 
   // 현재 탭 데이터 (계산)
   const currentTabData = tabData[activeTabId] || getInitialTabData();
@@ -459,81 +461,97 @@ function TestPage() {
   };
 
   const changedColumns = comparisonResult?.changedColumns || [];
-  const hasChanges =
-    comparisonResult && comparisonResult.comparisonData.length > 0;
 
-  /** (row, col)가 현재 선택 범위 안인지 */
-  const isCellInSelection = useCallback(
-    (tableId, row, col) => {
-      if (!selection || selection.tableId !== tableId) return false;
-      const { startRow, startCol, endRow, endCol } = selection;
-      const rMin = Math.min(startRow, endRow);
-      const rMax = Math.max(startRow, endRow);
-      const cMin = Math.min(startCol, endCol);
-      const cMax = Math.max(startCol, endCol);
-      return row >= rMin && row <= rMax && col >= cMin && col <= cMax;
+  const isFilterActive = selectedPrimeKeys.size > 0;
+
+  const displayComparisonData = useMemo(() => {
+    if (!comparisonResult) return [];
+    if (!isFilterActive) return comparisonResult.comparisonData;
+    return comparisonResult.comparisonData.filter((item) =>
+      selectedPrimeKeys.has(item.uniqueKey),
+    );
+  }, [comparisonResult, isFilterActive, selectedPrimeKeys]);
+
+  const getRowPrimeKey = useCallback(
+    (tableId, rowIndex) => {
+      const row = tableId === 1 ? data1[rowIndex] : data2[rowIndex];
+      return getUniqueKey(row);
     },
-    [selection],
+    [data1, data2],
   );
 
-  const getCellFromPoint = useCallback((clientX, clientY) => {
-    const el = document.elementFromPoint(clientX, clientY);
-    const cell = el?.closest?.('td, th');
-    if (!cell) return null;
-    const table = cell.closest('table[data-table-id]');
-    if (!table) return null;
-    const tableId = parseInt(table.getAttribute('data-table-id'), 10);
-    const row = parseInt(cell.getAttribute('data-row'), 10);
-    const col = parseInt(cell.getAttribute('data-col'), 10);
-    if (Number.isNaN(tableId) || Number.isNaN(row) || Number.isNaN(col))
-      return null;
-    return { tableId, row, col };
-  }, []);
+  const applyRowRangeSelection = useCallback(
+    (tableId, startIndex, endIndex) => {
+      const data = tableId === 1 ? data1 : data2;
+      const min = Math.min(startIndex, endIndex);
+      const max = Math.max(startIndex, endIndex);
+      const keys = new Set();
+      for (let i = min; i <= max; i += 1) {
+        keys.add(getUniqueKey(data[i]));
+      }
+      setSelectedPrimeKeys(keys);
+    },
+    [data1, data2],
+  );
 
-  const handleTableMouseDown = useCallback((e) => {
-    const cell = e.target.closest('td, th');
-    if (!cell) return;
-    const table = cell.closest('table[data-table-id]');
-    if (!table) return;
-    e.preventDefault();
-    const tableId = parseInt(table.getAttribute('data-table-id'), 10);
-    const row = parseInt(cell.getAttribute('data-row'), 10);
-    const col = parseInt(cell.getAttribute('data-col'), 10);
-    if (Number.isNaN(tableId) || Number.isNaN(row) || Number.isNaN(col)) return;
-    selectionStartRef.current = { tableId, row, col };
-    setSelection({
-      tableId,
-      startRow: row,
-      startCol: col,
-      endRow: row,
-      endCol: col,
-    });
+  const handleRowMouseDown = useCallback(
+    (e, tableId, rowIndex) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      rowDragTableIdRef.current = tableId;
+      rowDragStartIndexRef.current = rowIndex;
+      isRowDraggingRef.current = true;
+      applyRowRangeSelection(tableId, rowIndex, rowIndex);
+    },
+    [applyRowRangeSelection],
+  );
+
+  const handleRowMouseEnter = useCallback(
+    (_e, tableId, rowIndex) => {
+      if (!isRowDraggingRef.current) return;
+      if (rowDragTableIdRef.current !== tableId) return;
+      if (rowDragStartIndexRef.current == null) return;
+      applyRowRangeSelection(
+        tableId,
+        rowDragStartIndexRef.current,
+        rowIndex,
+      );
+    },
+    [applyRowRangeSelection],
+  );
+
+  const isSourceRowSelected = useCallback(
+    (tableId, rowIndex) => {
+      if (!isFilterActive) return false;
+      return selectedPrimeKeys.has(getRowPrimeKey(tableId, rowIndex));
+    },
+    [isFilterActive, selectedPrimeKeys, getRowPrimeKey],
+  );
+
+  const endRowDrag = useCallback(() => {
+    isRowDraggingRef.current = false;
+    rowDragStartIndexRef.current = null;
+    rowDragTableIdRef.current = null;
   }, []);
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!selectionStartRef.current) return;
-      const cur = getCellFromPoint(e.clientX, e.clientY);
-      if (!cur || cur.tableId !== selectionStartRef.current.tableId) return;
-      setSelection((prev) => {
-        if (!prev || prev.tableId !== cur.tableId) return prev;
-        return {
-          ...prev,
-          endRow: cur.row,
-          endCol: cur.col,
-        };
-      });
+    window.addEventListener('mouseup', endRowDrag);
+    return () => window.removeEventListener('mouseup', endRowDrag);
+  }, [endRowDrag]);
+
+  useEffect(() => {
+    const handlePointerDownOutside = (e) => {
+      if (e.target.closest('.invest-list-table-wrapper')) return;
+      setSelectedPrimeKeys(new Set());
     };
-    const handleMouseUp = () => {
-      selectionStartRef.current = null;
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [getCellFromPoint]);
+    document.addEventListener('mousedown', handlePointerDownOutside);
+    return () =>
+      document.removeEventListener('mousedown', handlePointerDownOutside);
+  }, []);
+
+  useEffect(() => {
+    setSelectedPrimeKeys(new Set());
+  }, [activeTabId, data1, data2]);
 
   return (
     <div className='page-container'>
@@ -648,69 +666,55 @@ function TestPage() {
 
             {!loading && !error && (
               <div className='tables-container' ref={tablesContainerRef}>
+                <p className='table-selection-hint'>
+                  행을 클릭하거나 드래그하면 해당 prime-key 기준으로 비교
+                  결과가 필터됩니다. 테이블 외부를 클릭하면 필터가 해제됩니다.
+                </p>
                 <div className='table-section'>
                   <h2>기준 투자 리스트</h2>
                   {data1.length > 0 ? (
                     <div
-                      className='table-wrapper'
+                      className='table-wrapper invest-list-table-wrapper'
                       ref={table1Ref}
-                      onMouseDown={handleTableMouseDown}
-                      onSelectStart={(e) => e.preventDefault()}
                     >
                       <table className='data-table' data-table-id={1}>
                         <thead>
                           <tr>
-                            <th
-                              className='row-num-column'
-                              data-row={0}
-                              data-col={0}
-                            >
-                              #
-                            </th>
+                            <th className='row-num-column'>#</th>
                             {getOrderedHeaders(headers1).map(
                               (header, index) => (
-                                <th
-                                  key={index}
-                                  data-row={0}
-                                  data-col={index + 1}
-                                >
-                                  {header}
-                                </th>
+                                <th key={index}>{header}</th>
                               ),
                             )}
                           </tr>
                         </thead>
                         <tbody>
                           {data1.map((row, rowIndex) => (
-                            <tr key={`t1-${rowIndex}`}>
-                              <td
-                                className={`row-num-column ${isCellInSelection(1, rowIndex + 1, 0) ? 'cell-selected' : ''}`}
-                                data-row={rowIndex + 1}
-                                data-col={0}
-                              >
+                            <tr
+                              key={`t1-${rowIndex}`}
+                              className={
+                                isSourceRowSelected(1, rowIndex)
+                                  ? 'row-selected'
+                                  : undefined
+                              }
+                              onMouseDown={(e) =>
+                                handleRowMouseDown(e, 1, rowIndex)
+                              }
+                              onMouseEnter={(e) =>
+                                handleRowMouseEnter(e, 1, rowIndex)
+                              }
+                            >
+                              <td className='row-num-column'>
                                 {rowIndex + 1}
                               </td>
                               {getOrderedHeaders(headers1).map(
                                 (header, colIndex) => (
                                   <td
                                     key={colIndex}
-                                    data-row={rowIndex + 1}
-                                    data-col={colIndex + 1}
                                     className={
-                                      [
-                                        isCellDifferent(1, rowIndex, header)
-                                          ? 'cell-different'
-                                          : '',
-                                        isCellInSelection(
-                                          1,
-                                          rowIndex + 1,
-                                          colIndex + 1,
-                                        )
-                                          ? 'cell-selected'
-                                          : '',
-                                      ]
-                                        .filter(Boolean)
-                                        .join(' ') || undefined
+                                      isCellDifferent(1, rowIndex, header)
+                                        ? 'cell-different'
+                                        : undefined
                                     }
                                   >
                                     {row[header]}
@@ -731,65 +735,47 @@ function TestPage() {
                   <h2>신규 투자 리스트</h2>
                   {data2.length > 0 ? (
                     <div
-                      className='table-wrapper'
+                      className='table-wrapper invest-list-table-wrapper'
                       ref={table2Ref}
-                      onMouseDown={handleTableMouseDown}
-                      onSelectStart={(e) => e.preventDefault()}
                     >
                       <table className='data-table' data-table-id={2}>
                         <thead>
                           <tr>
-                            <th
-                              className='row-num-column'
-                              data-row={0}
-                              data-col={0}
-                            >
-                              #
-                            </th>
+                            <th className='row-num-column'>#</th>
                             {getOrderedHeaders(headers2).map(
                               (header, index) => (
-                                <th
-                                  key={index}
-                                  data-row={0}
-                                  data-col={index + 1}
-                                >
-                                  {header}
-                                </th>
+                                <th key={index}>{header}</th>
                               ),
                             )}
                           </tr>
                         </thead>
                         <tbody>
                           {data2.map((row, rowIndex) => (
-                            <tr key={`t2-${rowIndex}`}>
-                              <td
-                                className={`row-num-column ${isCellInSelection(2, rowIndex + 1, 0) ? 'cell-selected' : ''}`}
-                                data-row={rowIndex + 1}
-                                data-col={0}
-                              >
+                            <tr
+                              key={`t2-${rowIndex}`}
+                              className={
+                                isSourceRowSelected(2, rowIndex)
+                                  ? 'row-selected'
+                                  : undefined
+                              }
+                              onMouseDown={(e) =>
+                                handleRowMouseDown(e, 2, rowIndex)
+                              }
+                              onMouseEnter={(e) =>
+                                handleRowMouseEnter(e, 2, rowIndex)
+                              }
+                            >
+                              <td className='row-num-column'>
                                 {rowIndex + 1}
                               </td>
                               {getOrderedHeaders(headers2).map(
                                 (header, colIndex) => (
                                   <td
                                     key={colIndex}
-                                    data-row={rowIndex + 1}
-                                    data-col={colIndex + 1}
                                     className={
-                                      [
-                                        isCellDifferent(2, rowIndex, header)
-                                          ? 'cell-different'
-                                          : '',
-                                        isCellInSelection(
-                                          2,
-                                          rowIndex + 1,
-                                          colIndex + 1,
-                                        )
-                                          ? 'cell-selected'
-                                          : '',
-                                      ]
-                                        .filter(Boolean)
-                                        .join(' ') || undefined
+                                      isCellDifferent(2, rowIndex, header)
+                                        ? 'cell-different'
+                                        : undefined
                                     }
                                   >
                                     {row[header]}
@@ -816,8 +802,16 @@ function TestPage() {
               aria-label='비교 결과 구간'
             >
               <div className='changes-section'>
-                <h2>비교 결과</h2>
-                {hasChanges ? (
+                <h2>
+                  비교 결과
+                  {isFilterActive && (
+                    <span className='comparison-filter-badge'>
+                      {' '}
+                      · 선택 {selectedPrimeKeys.size}건 필터 중
+                    </span>
+                  )}
+                </h2>
+                {displayComparisonData.length > 0 ? (
                   <div className='changes-table-wrapper'>
                     <table className='changes-table'>
                       <thead>
@@ -830,59 +824,64 @@ function TestPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {comparisonResult.comparisonData.map(
-                          (item, rowIndex) => {
-                            const { rowData, rowDiff, type } = item;
+                        {displayComparisonData.map((item, rowIndex) => {
+                          const { rowData, rowDiff, type } = item;
 
-                            return (
-                              <tr
-                                key={item.uniqueKey}
-                                className={`type-${type}`}
-                              >
-                                <td className='row-num-column'>
-                                  {rowIndex + 1}
-                                </td>
-                                {changedColumns.map((column, colIndex) => {
-                                  const diff = rowDiff[column];
-                                  const hasChange = diff && diff.changed;
+                          return (
+                            <tr
+                              key={item.uniqueKey}
+                              className={`type-${type}`}
+                            >
+                              <td className='row-num-column'>
+                                {rowIndex + 1}
+                              </td>
+                              {changedColumns.map((column, colIndex) => {
+                                const diff = rowDiff[column];
+                                const hasChange = diff && diff.changed;
 
-                                  return (
-                                    <td
-                                      key={colIndex}
-                                      className={
-                                        hasChange ? 'cell-different' : ''
-                                      }
-                                    >
-                                      {hasChange ? (
-                                        <span className='cell-change-value'>
-                                          <span className='old-value'>
-                                            {diff.oldValue || '(비어있음)'}
-                                          </span>
-                                          <span className='change-arrow'>
-                                            {' '}
-                                            →{' '}
-                                          </span>
-                                          <span className='new-value'>
-                                            {diff.newValue || '(비어있음)'}
-                                          </span>
+                                return (
+                                  <td
+                                    key={colIndex}
+                                    className={
+                                      hasChange ? 'cell-different' : ''
+                                    }
+                                  >
+                                    {hasChange ? (
+                                      <span className='cell-change-value'>
+                                        <span className='old-value'>
+                                          {diff.oldValue || '(비어있음)'}
                                         </span>
-                                      ) : (
-                                        rowData[column] || ''
-                                      )}
-                                    </td>
-                                  );
-                                })}
-                                <td className={`type-cell type-${type}`}>
-                                  <span className={`type-badge type-${type}`}>
-                                    {type}
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          },
-                        )}
+                                        <span className='change-arrow'>
+                                          {' '}
+                                          →{' '}
+                                        </span>
+                                        <span className='new-value'>
+                                          {diff.newValue || '(비어있음)'}
+                                        </span>
+                                      </span>
+                                    ) : (
+                                      rowData[column] || ''
+                                    )}
+                                  </td>
+                                );
+                              })}
+                              <td className={`type-cell type-${type}`}>
+                                <span className={`type-badge type-${type}`}>
+                                  {type}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
+                  </div>
+                ) : isFilterActive ? (
+                  <div className='no-changes-message no-changes-message--filter'>
+                    <p>
+                      선택한 항목에 표시할 변경 사항이 없습니다. (동일 항목이거나
+                      비교 결과에 포함되지 않음)
+                    </p>
                   </div>
                 ) : (
                   <div className='no-changes-message'>

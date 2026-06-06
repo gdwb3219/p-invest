@@ -1,4 +1,12 @@
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useCountStore, useSessionStorage } from '../../hooks/useCustomHooks';
+import axios from 'axios';
+import { useApiUrl } from '../../contexts/ApiUrlContext';
 
 function Counter() {
   const count = useCountStore((state) => state.count);
@@ -7,6 +15,42 @@ function Counter() {
 
   const [formData, setformData] = useSessionStorage('formData', {
     counted: 0,
+  });
+
+  const { API_URL } = useApiUrl();
+  const SAP_HIS_TEST_PATH = '/sap-his-data/test';
+
+  const LATEST_API_URL = `${API_URL}${SAP_HIS_TEST_PATH}`;
+
+  const getSapData = async () => {
+    const response = await axios.get(LATEST_API_URL);
+    const raw = response.data;
+    const list = Array.isArray(raw)
+      ? raw
+      : (raw?.data ??
+        raw?.results ??
+        raw?.sap_his_data ??
+        [raw].filter(Boolean));
+    return Array.isArray(list) ? list : [];
+  };
+
+  const queryClient = useQueryClient();
+
+  // tanstack query 예시
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['sap_data'],
+    queryFn: getSapData,
+  });
+
+  console.log('data', data);
+
+  // Mutation 예시
+  const mutation = useMutation({
+    mutationFn: getSapData,
+    onSuccess: () => {
+      // 성공 시에 어떤 걸 할 지? 보통 Invalidate Queries 필요
+      queryClient.invalidateQueries({ queryKey: ['sap_data'] });
+    },
   });
 
   const handleChangeCount = () => {
@@ -24,6 +68,10 @@ function Counter() {
 
       <p>현재 SessionStorage 카운트: {formData.counted}</p>
       <button onClick={handleChangeCount}> SessionStorage 증가</button>
+      <div>{isLoading ? '로딩 중...' : '로딩 완료'}</div>
+      <div>{isError ? '에러 발생' : '에러 없음'}</div>
+      <div>{data ? JSON.stringify(data) : '데이터 없음'}</div>
+      <div>하이</div>
     </div>
   );
 }
