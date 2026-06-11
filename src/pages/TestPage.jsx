@@ -456,19 +456,6 @@ function TestPage() {
   const headers1 = getHeaders(data1);
   const headers2 = getHeaders(data2);
 
-  // 셀이 차이가 있는지 확인 (기존 테이블용)
-  const isCellDifferent = (tableId, rowIndex, column) => {
-    if (!comparisonResult) return false;
-    const row = tableId === 1 ? data1[rowIndex] : data2[rowIndex];
-    if (!row) return false;
-    const uniqueKey = getUniqueKey(row);
-    const comparisonItem = comparisonResult.comparisonData.find(
-      (item) => item.uniqueKey === uniqueKey,
-    );
-    if (!comparisonItem) return false;
-    return comparisonItem.rowDiff[column]?.changed || false;
-  };
-
   const changedColumns = comparisonResult?.changedColumns || [];
   const rowTypeMap = comparisonResult?.rowTypeMap ?? {};
 
@@ -589,10 +576,12 @@ function TestPage() {
       const type = rowTypeMap[uniqueKey];
       const classes = [];
 
-      if (tableId === 1) {
-        if (type) classes.push('row-baseline-changed');
-      } else if (type === '신규' || type === '수정' || type === '삭제') {
-        classes.push(`row-type-${type}`);
+      if (type === '수정') {
+        classes.push('row-type-수정');
+      } else if (tableId === 1 && type === '삭제') {
+        classes.push('row-type-삭제');
+      } else if (tableId === 2 && type === '신규') {
+        classes.push('row-type-신규');
       }
 
       if (isSourceRowSelected(tableId, rowIndex)) {
@@ -801,16 +790,7 @@ function TestPage() {
                               </td>
                               {getOrderedHeaders(headers1).map(
                                 (header, colIndex) => (
-                                  <td
-                                    key={colIndex}
-                                    className={
-                                      isCellDifferent(1, rowIndex, header)
-                                        ? 'cell-different'
-                                        : undefined
-                                    }
-                                  >
-                                    {row[header]}
-                                  </td>
+                                  <td key={colIndex}>{row[header]}</td>
                                 ),
                               )}
                             </tr>
@@ -859,16 +839,7 @@ function TestPage() {
                               </td>
                               {getOrderedHeaders(headers2).map(
                                 (header, colIndex) => (
-                                  <td
-                                    key={colIndex}
-                                    className={
-                                      isCellDifferent(2, rowIndex, header)
-                                        ? 'cell-different'
-                                        : undefined
-                                    }
-                                  >
-                                    {row[header]}
-                                  </td>
+                                  <td key={colIndex}>{row[header]}</td>
                                 ),
                               )}
                             </tr>

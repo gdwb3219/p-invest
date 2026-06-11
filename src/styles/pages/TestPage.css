@@ -359,96 +359,74 @@ body.test-page-scroll-snap {
   border-bottom: none;
 }
 
-/* 행 선택 하이라이트 */
-.data-table tbody tr.row-selected td {
-  background-color: rgba(111, 140, 255, 0.22) !important;
+/* 행 선택: 내용 셀 — 진한 파란색 (타입별 # 열은 아래에서 유지) */
+.data-table tbody tr.row-selected td:not(.row-num-column) {
+  background-color: rgba(111, 140, 255, 0.32) !important;
 }
 
-.data-table tbody tr.row-selected td.row-num-column {
-  background-color: rgba(111, 140, 255, 0.28) !important;
+/* 수정: 양쪽 테이블 — # 노란색, 내용 연한 파란색 */
+.data-table tbody tr.row-type-수정 td.row-num-column {
+  background-color: rgba(245, 158, 11, 0.28) !important;
+  color: #92400e;
 }
 
-.data-table tbody tr.row-selected td.cell-different {
-  background-color: rgba(111, 140, 255, 0.35) !important;
+.data-table tbody tr.row-type-수정 td:not(.row-num-column) {
+  background-color: rgba(142, 164, 255, 0.12);
 }
 
-/* 기준 투자 리스트: prime-key 기준 변화(수정·삭제) 행 */
-.data-table tbody tr.row-baseline-changed td {
-  background-color: rgba(148, 163, 184, 0.2);
+.data-table tbody tr.row-type-수정:hover td:not(.row-num-column) {
+  background-color: rgba(142, 164, 255, 0.18);
 }
 
-.data-table tbody tr.row-baseline-changed td.row-num-column {
-  background-color: rgba(148, 163, 184, 0.26);
+.data-table tbody tr.row-type-수정.row-selected td.row-num-column {
+  background-color: rgba(245, 158, 11, 0.38) !important;
+  box-shadow: inset 3px 0 0 rgba(90, 111, 214, 0.85);
 }
 
-.data-table tbody tr.row-baseline-changed:hover td {
-  background-color: rgba(148, 163, 184, 0.28);
-}
-
-.data-table tbody tr.row-baseline-changed:hover td.row-num-column {
-  background-color: rgba(148, 163, 184, 0.32);
-}
-
-.data-table tbody tr.row-baseline-changed td.cell-different {
-  background-color: rgba(251, 191, 36, 0.32) !important;
-}
-
-/* 신규 투자 리스트: 비교 타입별 행 배경 */
+/* 신규: 신규 투자 리스트 — 초록색 계열 */
 .data-table tbody tr.row-type-신규 td {
   background-color: rgba(16, 185, 129, 0.14);
 }
 
 .data-table tbody tr.row-type-신규 td.row-num-column {
-  background-color: rgba(16, 185, 129, 0.2);
+  background-color: rgba(16, 185, 129, 0.22);
+  color: #047857;
 }
 
 .data-table tbody tr.row-type-신규:hover td {
-  background-color: rgba(16, 185, 129, 0.22);
+  background-color: rgba(16, 185, 129, 0.2);
 }
 
 .data-table tbody tr.row-type-신규:hover td.row-num-column {
   background-color: rgba(16, 185, 129, 0.28);
 }
 
-.data-table tbody tr.row-type-수정 td {
-  background-color: rgba(245, 158, 11, 0.16);
+.data-table tbody tr.row-type-신규.row-selected td.row-num-column {
+  background-color: rgba(16, 185, 129, 0.3) !important;
+  box-shadow: inset 3px 0 0 rgba(90, 111, 214, 0.85);
 }
 
-.data-table tbody tr.row-type-수정 td.row-num-column {
-  background-color: rgba(245, 158, 11, 0.22);
-}
-
-.data-table tbody tr.row-type-수정:hover td {
-  background-color: rgba(245, 158, 11, 0.24);
-}
-
-.data-table tbody tr.row-type-수정:hover td.row-num-column {
-  background-color: rgba(245, 158, 11, 0.3);
-}
-
+/* 삭제: 기준 투자 리스트 — 빨간색 계열 */
 .data-table tbody tr.row-type-삭제 td {
   background-color: rgba(239, 68, 68, 0.14);
 }
 
 .data-table tbody tr.row-type-삭제 td.row-num-column {
-  background-color: rgba(239, 68, 68, 0.2);
+  background-color: rgba(239, 68, 68, 0.22);
+  color: #b91c1c;
 }
 
 .data-table tbody tr.row-type-삭제:hover td {
-  background-color: rgba(239, 68, 68, 0.22);
+  background-color: rgba(239, 68, 68, 0.2);
 }
 
 .data-table tbody tr.row-type-삭제:hover td.row-num-column {
   background-color: rgba(239, 68, 68, 0.28);
 }
 
-/* 차이가 있는 셀 하이라이트 */
-.data-table .cell-different {
-  background-color: rgba(251, 191, 36, 0.22) !important;
-}
-
-.data-table .cell-different:hover {
-  background-color: rgba(251, 191, 36, 0.35) !important;
+.data-table tbody tr.row-type-삭제.row-selected td.row-num-column {
+  background-color: rgba(239, 68, 68, 0.3) !important;
+  box-shadow: inset 3px 0 0 rgba(90, 111, 214, 0.85);
 }
 
 /* 변경사항 요약 섹션 */
