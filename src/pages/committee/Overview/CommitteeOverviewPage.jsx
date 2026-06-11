@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useSessionStorage } from '../../../hooks/useCustomHooks';
-import { useApiUrl } from '../../../contexts/ApiUrlContext';
+import { useApiUrl } from '../../../stores';
 import '../../../styles/pages/invest-rev/InvestRevRequest.css';
 import '../../../styles/pages/invest-rev/InvestCommitteeChange.css';
 import CancelModal from '../../invest-rev/modal/CancelModal.jsx';

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { useApiUrl } from '../../../contexts/ApiUrlContext';
+import { useApiUrl } from '../../../stores';
 import '../../../styles/pages/invest-rev/InvestRevRequest.css';
 import CommitteeHistoryControls from './components/CommitteeHistoryControls';
 import CommitteeHistoryTable from './components/CommitteeHistoryTable';
@@ -10,7 +10,9 @@ import {
   buildRowDataHeaders,
   committeeStatusFilterKey,
   committeeStatusFilterLabel,
+  deduplicateCommitteeHistoryRows,
   downloadCsv,
+  filterCommitteeHistoryByStatus,
   normalizeCommitteeListPayload,
   sortRowsByCreatedAt,
 } from './historyUtils';
@@ -33,7 +35,9 @@ function CommitteeHistoryListPage() {
     try {
       const res = await axios.get(historyListUrl);
       const list = normalizeCommitteeListPayload(res.data);
-      setRows(Array.isArray(list) ? list : []);
+      setRows(
+        deduplicateCommitteeHistoryRows(Array.isArray(list) ? list : []),
+      );
     } catch (err) {
       console.error('투심위 리스트 로드 오류:', err);
       setError(
@@ -54,7 +58,7 @@ function CommitteeHistoryListPage() {
     void fetchList();
   }, [fetchList]);
 
-  // 생성일시 기준 정렬
+  // 생성일시 기준 정렬 (원본 rows는 변경하지 않음)
   const sortedRows = useMemo(() => sortRowsByCreatedAt(rows), [rows]);
 
   // 투심위 상태 옵션 생성
@@ -74,12 +78,14 @@ function CommitteeHistoryListPage() {
     }));
   }, [sortedRows]);
 
-  const filteredRows = useMemo(() => {
-    if (!committeeStatusFilter) return sortedRows;
-    return sortedRows.filter(
-      (row) => committeeStatusFilterKey(row) === committeeStatusFilter,
-    );
-  }, [sortedRows, committeeStatusFilter]);
+  const filteredRows = useMemo(
+    () => filterCommitteeHistoryByStatus(sortedRows, committeeStatusFilter),
+    [sortedRows, committeeStatusFilter],
+  );
+
+  const handleStatusFilterChange = useCallback((value) => {
+    setCommitteeStatusFilter(value);
+  }, []);
 
   const rowDataHeaders = useMemo(
     () => buildRowDataHeaders(sortedRows),
@@ -127,7 +133,7 @@ function CommitteeHistoryListPage() {
             committeeStatusOptions={committeeStatusOptions}
             onRefresh={fetchList}
             onDownloadCsv={handleDownloadCsv}
-            onStatusFilterChange={setCommitteeStatusFilter}
+            onStatusFilterChange={handleStatusFilterChange}
           />
           <CommitteeHistoryTable
             filteredRows={filteredRows}

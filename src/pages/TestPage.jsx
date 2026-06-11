@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import RevSelector from '../components/rev-compare/RevSelector';
-import { useApiUrl } from '../contexts/ApiUrlContext';
+import { useApiUrl } from '../stores';
 import '../styles/pages/TestPage.css';
 
 // "BizName", "BizNum"을 항상 왼쪽 열로 두기 위한 헤더 정렬 (컴포넌트 외부에서 상수로 사용)
@@ -42,9 +42,18 @@ function TestPage() {
   const isScrollingRef = useRef(false);
   /** prime_key 기준 비교 결과 필터 (비어 있으면 전체 표시) */
   const [selectedPrimeKeys, setSelectedPrimeKeys] = useState(() => new Set());
+  const selectedPrimeKeysRef = useRef(selectedPrimeKeys);
   const rowDragStartIndexRef = useRef(null);
   const rowDragTableIdRef = useRef(null);
   const isRowDraggingRef = useRef(false);
+  const dragMovedRef = useRef(false);
+  const dragBaseSelectionRef = useRef(new Set());
+  const ctrlClickPendingKeyRef = useRef(null);
+  const lastClickedIndexRef = useRef({ 1: null, 2: null });
+
+  useEffect(() => {
+    selectedPrimeKeysRef.current = selectedPrimeKeys;
+  }, [selectedPrimeKeys]);
 
   // 현재 탭 데이터 (계산)
   const currentTabData = tabData[activeTabId] || getInitialTabData();
@@ -461,6 +470,7 @@ function TestPage() {
   };
 
   const changedColumns = comparisonResult?.changedColumns || [];
+  const rowTypeMap = comparisonResult?.rowTypeMap ?? {};
 
   const isFilterActive = selectedPrimeKeys.size > 0;
 
@@ -481,15 +491,23 @@ function TestPage() {
   );
 
   const applyRowRangeSelection = useCallback(
-    (tableId, startIndex, endIndex) => {
+    (tableId, startIndex, endIndex, additive = false) => {
       const data = tableId === 1 ? data1 : data2;
+      if (!data.length) return;
       const min = Math.min(startIndex, endIndex);
       const max = Math.max(startIndex, endIndex);
-      const keys = new Set();
+      const rangeKeys = new Set();
       for (let i = min; i <= max; i += 1) {
-        keys.add(getUniqueKey(data[i]));
+        const key = getUniqueKey(data[i]);
+        if (key) rangeKeys.add(key);
       }
-      setSelectedPrimeKeys(keys);
+      if (!additive) {
+        setSelectedPrimeKeys(rangeKeys);
+        return;
+      }
+      setSelectedPrimeKeys(
+        new Set([...dragBaseSelectionRef.current, ...rangeKeys]),
+      );
     },
     [data1, data2],
   );
@@ -498,40 +516,113 @@ function TestPage() {
     (e, tableId, rowIndex) => {
       if (e.button !== 0) return;
       e.preventDefault();
+
+      const data = tableId === 1 ? data1 : data2;
+      const row = data[rowIndex];
+      if (!row) return;
+
+      const ctrl = e.ctrlKey || e.metaKey;
+      const shift = e.shiftKey;
+      const lastIndex = lastClickedIndexRef.current[tableId];
+
+      if (shift && lastIndex != null) {
+        dragBaseSelectionRef.current = ctrl
+          ? new Set(selectedPrimeKeysRef.current)
+          : new Set();
+        applyRowRangeSelection(tableId, lastIndex, rowIndex, ctrl);
+        lastClickedIndexRef.current[tableId] = rowIndex;
+        isRowDraggingRef.current = false;
+        rowDragTableIdRef.current = null;
+        ctrlClickPendingKeyRef.current = null;
+        return;
+      }
+
       rowDragTableIdRef.current = tableId;
       rowDragStartIndexRef.current = rowIndex;
+      lastClickedIndexRef.current[tableId] = rowIndex;
       isRowDraggingRef.current = true;
-      applyRowRangeSelection(tableId, rowIndex, rowIndex);
+      dragMovedRef.current = false;
+
+      if (ctrl) {
+        dragBaseSelectionRef.current = new Set(selectedPrimeKeysRef.current);
+        ctrlClickPendingKeyRef.current = getUniqueKey(row);
+        return;
+      }
+
+      ctrlClickPendingKeyRef.current = null;
+      dragBaseSelectionRef.current = new Set();
+      applyRowRangeSelection(tableId, rowIndex, rowIndex, false);
     },
-    [applyRowRangeSelection],
+    [data1, data2, applyRowRangeSelection],
   );
 
   const handleRowMouseEnter = useCallback(
-    (_e, tableId, rowIndex) => {
+    (e, tableId, rowIndex) => {
       if (!isRowDraggingRef.current) return;
       if (rowDragTableIdRef.current !== tableId) return;
       if (rowDragStartIndexRef.current == null) return;
+      dragMovedRef.current = true;
+      const additive = Boolean(
+        ctrlClickPendingKeyRef.current != null || e.ctrlKey || e.metaKey,
+      );
       applyRowRangeSelection(
         tableId,
         rowDragStartIndexRef.current,
         rowIndex,
+        additive,
       );
     },
     [applyRowRangeSelection],
   );
 
   const isSourceRowSelected = useCallback(
+    (tableId, rowIndex) =>
+      selectedPrimeKeys.has(getRowPrimeKey(tableId, rowIndex)),
+    [selectedPrimeKeys, getRowPrimeKey],
+  );
+
+  const getSourceTableRowClassName = useCallback(
     (tableId, rowIndex) => {
-      if (!isFilterActive) return false;
-      return selectedPrimeKeys.has(getRowPrimeKey(tableId, rowIndex));
+      const row = tableId === 1 ? data1[rowIndex] : data2[rowIndex];
+      if (!row) return undefined;
+      const uniqueKey = getUniqueKey(row);
+      const type = rowTypeMap[uniqueKey];
+      const classes = [];
+
+      if (tableId === 1) {
+        if (type) classes.push('row-baseline-changed');
+      } else if (type === '신규' || type === '수정' || type === '삭제') {
+        classes.push(`row-type-${type}`);
+      }
+
+      if (isSourceRowSelected(tableId, rowIndex)) {
+        classes.push('row-selected');
+      }
+
+      return classes.length > 0 ? classes.join(' ') : undefined;
     },
-    [isFilterActive, selectedPrimeKeys, getRowPrimeKey],
+    [data1, data2, rowTypeMap, isSourceRowSelected],
   );
 
   const endRowDrag = useCallback(() => {
+    if (
+      isRowDraggingRef.current &&
+      ctrlClickPendingKeyRef.current != null &&
+      !dragMovedRef.current
+    ) {
+      const key = ctrlClickPendingKeyRef.current;
+      setSelectedPrimeKeys((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key);
+        else next.add(key);
+        return next;
+      });
+    }
     isRowDraggingRef.current = false;
     rowDragStartIndexRef.current = null;
     rowDragTableIdRef.current = null;
+    ctrlClickPendingKeyRef.current = null;
+    dragMovedRef.current = false;
   }, []);
 
   useEffect(() => {
@@ -542,6 +633,7 @@ function TestPage() {
   useEffect(() => {
     const handlePointerDownOutside = (e) => {
       if (e.target.closest('.invest-list-table-wrapper')) return;
+      if (e.target.closest('.changes-section')) return;
       setSelectedPrimeKeys(new Set());
     };
     document.addEventListener('mousedown', handlePointerDownOutside);
@@ -551,6 +643,7 @@ function TestPage() {
 
   useEffect(() => {
     setSelectedPrimeKeys(new Set());
+    lastClickedIndexRef.current = { 1: null, 2: null };
   }, [activeTabId, data1, data2]);
 
   return (
@@ -667,8 +760,10 @@ function TestPage() {
             {!loading && !error && (
               <div className='tables-container' ref={tablesContainerRef}>
                 <p className='table-selection-hint'>
-                  행을 클릭하거나 드래그하면 해당 prime-key 기준으로 비교
-                  결과가 필터됩니다. 테이블 외부를 클릭하면 필터가 해제됩니다.
+                  행 클릭·드래그로 prime-key 필터.{' '}
+                  <strong>Shift</strong>+클릭 구간 선택,{' '}
+                  <strong>Ctrl</strong>+클릭 토글·드래그로 추가 선택. 비교
+                  테이블 1·2 밖(비교 결과 영역 제외) 클릭 시 필터 해제.
                 </p>
                 <div className='table-section'>
                   <h2>기준 투자 리스트</h2>
@@ -692,11 +787,8 @@ function TestPage() {
                           {data1.map((row, rowIndex) => (
                             <tr
                               key={`t1-${rowIndex}`}
-                              className={
-                                isSourceRowSelected(1, rowIndex)
-                                  ? 'row-selected'
-                                  : undefined
-                              }
+                              className={getSourceTableRowClassName(1, rowIndex)}
+                              title='Shift+클릭 구간 · Ctrl+클릭 토글/추가'
                               onMouseDown={(e) =>
                                 handleRowMouseDown(e, 1, rowIndex)
                               }
@@ -753,11 +845,8 @@ function TestPage() {
                           {data2.map((row, rowIndex) => (
                             <tr
                               key={`t2-${rowIndex}`}
-                              className={
-                                isSourceRowSelected(2, rowIndex)
-                                  ? 'row-selected'
-                                  : undefined
-                              }
+                              className={getSourceTableRowClassName(2, rowIndex)}
+                              title='Shift+클릭 구간 · Ctrl+클릭 토글/추가'
                               onMouseDown={(e) =>
                                 handleRowMouseDown(e, 2, rowIndex)
                               }
@@ -812,7 +901,7 @@ function TestPage() {
                   )}
                 </h2>
                 {displayComparisonData.length > 0 ? (
-                  <div className='changes-table-wrapper'>
+                  <div className='changes-table-wrapper changes-table-wrapper--fixed-rows'>
                     <table className='changes-table'>
                       <thead>
                         <tr>
@@ -876,16 +965,40 @@ function TestPage() {
                       </tbody>
                     </table>
                   </div>
-                ) : isFilterActive ? (
-                  <div className='no-changes-message no-changes-message--filter'>
-                    <p>
-                      선택한 항목에 표시할 변경 사항이 없습니다. (동일 항목이거나
-                      비교 결과에 포함되지 않음)
-                    </p>
-                  </div>
                 ) : (
-                  <div className='no-changes-message'>
-                    <p>✓ 모든 데이터가 동일합니다.</p>
+                  <div className='changes-table-wrapper changes-table-wrapper--fixed-rows'>
+                    <table className='changes-table'>
+                      <thead>
+                        <tr>
+                          <th className='row-num-column'>#</th>
+                          {changedColumns.length > 0 ? (
+                            changedColumns.map((header, index) => (
+                              <th key={index}>{header}</th>
+                            ))
+                          ) : (
+                            <th>데이터</th>
+                          )}
+                          <th className='type-column'>변경 타입</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className='changes-table-empty-row'>
+                          <td
+                            colSpan={Math.max(changedColumns.length, 1) + 2}
+                            className='changes-table-empty-cell'
+                          >
+                            {isFilterActive ? (
+                              <>
+                                선택한 항목에 표시할 변경 사항이 없습니다.
+                                (동일 항목이거나 비교 결과에 포함되지 않음)
+                              </>
+                            ) : (
+                              <>✓ 모든 데이터가 동일합니다.</>
+                            )}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>

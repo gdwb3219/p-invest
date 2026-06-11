@@ -372,6 +372,76 @@ body.test-page-scroll-snap {
   background-color: rgba(111, 140, 255, 0.35) !important;
 }
 
+/* 기준 투자 리스트: prime-key 기준 변화(수정·삭제) 행 */
+.data-table tbody tr.row-baseline-changed td {
+  background-color: rgba(148, 163, 184, 0.2);
+}
+
+.data-table tbody tr.row-baseline-changed td.row-num-column {
+  background-color: rgba(148, 163, 184, 0.26);
+}
+
+.data-table tbody tr.row-baseline-changed:hover td {
+  background-color: rgba(148, 163, 184, 0.28);
+}
+
+.data-table tbody tr.row-baseline-changed:hover td.row-num-column {
+  background-color: rgba(148, 163, 184, 0.32);
+}
+
+.data-table tbody tr.row-baseline-changed td.cell-different {
+  background-color: rgba(251, 191, 36, 0.32) !important;
+}
+
+/* 신규 투자 리스트: 비교 타입별 행 배경 */
+.data-table tbody tr.row-type-신규 td {
+  background-color: rgba(16, 185, 129, 0.14);
+}
+
+.data-table tbody tr.row-type-신규 td.row-num-column {
+  background-color: rgba(16, 185, 129, 0.2);
+}
+
+.data-table tbody tr.row-type-신규:hover td {
+  background-color: rgba(16, 185, 129, 0.22);
+}
+
+.data-table tbody tr.row-type-신규:hover td.row-num-column {
+  background-color: rgba(16, 185, 129, 0.28);
+}
+
+.data-table tbody tr.row-type-수정 td {
+  background-color: rgba(245, 158, 11, 0.16);
+}
+
+.data-table tbody tr.row-type-수정 td.row-num-column {
+  background-color: rgba(245, 158, 11, 0.22);
+}
+
+.data-table tbody tr.row-type-수정:hover td {
+  background-color: rgba(245, 158, 11, 0.24);
+}
+
+.data-table tbody tr.row-type-수정:hover td.row-num-column {
+  background-color: rgba(245, 158, 11, 0.3);
+}
+
+.data-table tbody tr.row-type-삭제 td {
+  background-color: rgba(239, 68, 68, 0.14);
+}
+
+.data-table tbody tr.row-type-삭제 td.row-num-column {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.data-table tbody tr.row-type-삭제:hover td {
+  background-color: rgba(239, 68, 68, 0.22);
+}
+
+.data-table tbody tr.row-type-삭제:hover td.row-num-column {
+  background-color: rgba(239, 68, 68, 0.28);
+}
+
 /* 차이가 있는 셀 하이라이트 */
 .data-table .cell-different {
   background-color: rgba(251, 191, 36, 0.22) !important;
@@ -408,10 +478,42 @@ body.test-page-scroll-snap {
 .changes-table-wrapper {
   overflow-x: auto;
   overflow-y: auto;
-  max-height: min(56vh, 560px);
   border-radius: 10px;
   border: 1px solid #e8eaef;
   background: #fff;
+}
+
+.changes-table-wrapper--fixed-rows {
+  --comparison-head-h: 2.35rem;
+  --comparison-row-h: 2.35rem;
+  --comparison-fixed-rows: 10;
+  height: calc(
+    var(--comparison-head-h) + var(--comparison-row-h) * var(--comparison-fixed-rows)
+  );
+  min-height: calc(
+    var(--comparison-head-h) + var(--comparison-row-h) * var(--comparison-fixed-rows)
+  );
+  max-height: calc(
+    var(--comparison-head-h) + var(--comparison-row-h) * var(--comparison-fixed-rows)
+  );
+}
+
+.changes-table-wrapper--fixed-rows .changes-table tbody {
+  min-height: calc(var(--comparison-row-h) * var(--comparison-fixed-rows));
+}
+
+.changes-table-empty-row .changes-table-empty-cell {
+  text-align: center;
+  vertical-align: middle;
+  color: #5c6370;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  padding: 1.5rem 1rem;
+  background: #fafbfc;
+}
+
+.changes-table-empty-row .changes-table-empty-cell:only-child {
+  height: calc(var(--comparison-row-h) * var(--comparison-fixed-rows));
 }
 
 .changes-table {

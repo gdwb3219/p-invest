@@ -18,6 +18,7 @@ export function normalizeCommitteeListPayload(data) {
   if (Array.isArray(data)) return data;
   if (data?.data != null && Array.isArray(data.data)) return data.data;
   if (data?.items != null && Array.isArray(data.items)) return data.items;
+  if (data?.results != null && Array.isArray(data.results)) return data.results;
   return normalizeRows(data);
 }
 
@@ -51,12 +52,48 @@ export function committeeStatusFilterLabel(key) {
   return key === '__EMPTY__' ? '(값 없음)' : key;
 }
 
-export function getRowReactKey(row, index) {
+export function getDocumentIdString(row) {
   const id = row?._id;
-  if (id && typeof id === 'object' && id.$oid != null) return id.$oid;
+  if (id && typeof id === 'object' && id.$oid != null) return String(id.$oid);
+  if (typeof id === 'string' && id.trim()) return id.trim();
   if (id != null) return String(id);
+  return null;
+}
+
+/** 동일 _id가 API 응답에 중복 포함된 경우만 제거 (prime-key 기준 병합은 하지 않음) */
+export function deduplicateCommitteeHistoryRows(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return [];
+  const seenIds = new Set();
+  const result = [];
+  for (const row of rows) {
+    const id = getDocumentIdString(row);
+    if (id) {
+      if (seenIds.has(id)) continue;
+      seenIds.add(id);
+    }
+    result.push(row);
+  }
+  return result;
+}
+
+/** 투심위 상태 필터 — 항상 새 배열 반환(원본 sortedRows 참조 공유 금지) */
+export function filterCommitteeHistoryByStatus(rows, statusFilter) {
+  const source = Array.isArray(rows) ? rows : [];
+  if (!statusFilter) return source.slice();
+  return source.filter(
+    (row) => committeeStatusFilterKey(row) === statusFilter,
+  );
+}
+
+export function getRowReactKey(row, index) {
+  const id = getDocumentIdString(row);
+  if (id) return `oid:${id}`;
+
   const pk = row?.['prime-key'] ?? row?.prime_key ?? row?.row_key;
-  if (pk != null) return String(pk);
+  const created = formatCellValue(row?.created_at);
+  if (pk != null) {
+    return `pk:${String(pk)}|${created}|${index}`;
+  }
   return `committee-history-${index}`;
 }
 
@@ -101,7 +138,8 @@ export function downloadCsv(text, baseName) {
 }
 
 export function sortRowsByCreatedAt(rows) {
-  return [...rows].sort((a, b) => {
+  const copy = Array.isArray(rows) ? [...rows] : [];
+  return copy.sort((a, b) => {
     const ta = a?.created_at;
     const tb = b?.created_at;
     const da =

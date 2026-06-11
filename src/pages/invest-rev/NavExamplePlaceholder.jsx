@@ -6,7 +6,7 @@ import {
 } from '@tanstack/react-query';
 import { useCountStore, useSessionStorage } from '../../hooks/useCustomHooks';
 import axios from 'axios';
-import { useApiUrl } from '../../contexts/ApiUrlContext';
+import { useApiUrl } from '../../stores';
 
 function Counter() {
   const count = useCountStore((state) => state.count);

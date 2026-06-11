@@ -1,19 +1,11 @@
 import { useEffect, useState } from 'react';
-import { create } from 'zustand';
 
-// Zustand를 사용하는 커스텀 훅
-export const useCountStore = create((set) => ({
-  count: 0,
+export { useCountStore } from '../stores/countStore';
 
-  increment: () => set((state) => ({ count: state.count + 1 })),
-  decrement: () => set((state) => ({ count: state.count - 1 })),
-}));
-
-// Session Storage를 사용하는 커스텀 훅
+/** sessionStorage와 동기화되는 로컬 상태 (페이지·폼 단위 persist용) */
 export function useSessionStorage(key, initialValue) {
-  // 1. 초기 상태를 Session Storage에서 읽어오기
   const [storedValue, setStoredValue] = useState(() => {
-    if (typeof window === 'undefined') return initialValue; // SSR(Next.js 등) 방어 코드
+    if (typeof window === 'undefined') return initialValue;
 
     try {
       const item = window.sessionStorage.getItem(key);
@@ -24,7 +16,6 @@ export function useSessionStorage(key, initialValue) {
     }
   });
 
-  // 2. 상태가 변경될 때마다 Session Storage도 업데이트
   useEffect(() => {
     try {
       window.sessionStorage.setItem(key, JSON.stringify(storedValue));

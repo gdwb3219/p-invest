@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
-import { useApiUrl } from '../../../contexts/ApiUrlContext';
+import { useApiUrl } from '../../../stores';
 import '../../../styles/pages/invest-rev/InvestRevRequest.css';
 import CommitteeConfirmModal from './components/CommitteeConfirmModal';
 import CommitteePasswordModal from './components/CommitteePasswordModal';

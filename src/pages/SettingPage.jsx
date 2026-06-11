@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useApiUrl } from '../contexts/ApiUrlContext';
+import { useApiUrl } from '../stores';
 import '../styles/pages/SettingPage.css';
 
 function SettingPage() {

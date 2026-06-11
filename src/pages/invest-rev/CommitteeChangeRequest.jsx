@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { useApiUrl } from '../../contexts/ApiUrlContext';
+import { useApiUrl } from '../../stores';
 import '../../styles/pages/invest-rev/InvestRevRequest.css';
 import '../../styles/pages/invest-rev/CommitteeChangeRequest.css';
 

@@ -7,7 +7,7 @@ import {
   useRef,
 } from 'react';
 import axios from 'axios';
-import { useApiUrl } from '../contexts/ApiUrlContext';
+import { useApiUrl } from '../stores';
 import HistoryChangeReasonCell from './HistoryPage/components/HistoryChangeReasonCell';
 import {
   CHANGE_REASON_COLUMN,

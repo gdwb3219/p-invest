@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { useApiUrl } from '../../contexts/ApiUrlContext';
+import { useApiUrl } from '../../stores';
 import '../../styles/pages/invest-rev/InvestRevRequest.css';
 
 const LATEST_SHEET_PATH = '/sap-his-data/test';
