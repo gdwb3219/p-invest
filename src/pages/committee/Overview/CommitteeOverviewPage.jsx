@@ -351,6 +351,8 @@ function CommitteeOverviewPage() {
     setClearStagingModalOpen(false);
   }, [setStagedRows]);
 
+  // tan stack react query 사용
+  // 승인 요청 저장
   const approveMutation = useMutation({
     mutationFn: async (payload) => {
       await axios.post(COMMITTEE_APPROVAL_POST_URL, payload, {

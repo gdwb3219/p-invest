@@ -1,11 +1,11 @@
 import {
   useState,
-  useEffect,
   useLayoutEffect,
   useCallback,
   Fragment,
   useRef,
 } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useApiUrl } from '../stores';
 import HistoryChangeReasonCell from './HistoryPage/components/HistoryChangeReasonCell';
@@ -29,137 +29,163 @@ const getOrderedHeaders = (headers) => {
 };
 
 const PRIMEKEY_COLUMN = 'prime-key';
+const SAP_HIS_LATEST_QUERY_KEY = 'sap_his_latest';
+const SAP_HIS_BY_PRIMEKEY_QUERY_KEY = 'sap_his_by_primekey';
 
+// axios.get 해온 데이터를 정규화하는 함수
+const normalizeSapHisList = (raw) => {
+  const list = Array.isArray(raw)
+    ? raw
+    : (raw?.data ?? raw?.results ?? raw?.sap_his_data ?? [raw].filter(Boolean));
+  return Array.isArray(list) ? list : [];
+};
+
+// latest sap his data 를 가져오는 함수
+const fetchLatestSapHis = async (url) => {
+  const response = await axios.get(url);
+  return normalizeSapHisList(response.data);
+};
+
+// prime key 에 해당하는 sap his data 를 가져오는 함수
+const fetchSapHisByPrimeKey = async (apiBase, primeKey) => {
+  const response = await axios.get(`${apiBase}/by-primekey`, {
+    params: { 'prime-key': primeKey },
+  });
+  return normalizeSapHisList(response.data);
+};
+
+// 오류 메시지를 반환하는 함수
+const getQueryErrorMessage = (err, fallback) =>
+  err?.response?.data?.message ?? err?.message ?? fallback;
+
+// 변경사유를 저장하는 함수
 const patchRowChangeReason = (row, value) => ({
   ...row,
   [CHANGE_REASON_COLUMN]: value,
 });
 
+// 히스토리 페이지 컴포넌트
 function HistoryPage() {
   const { API_URL } = useApiUrl();
   const LATEST_API_URL = `${API_URL}${SAP_HIS_TEST_PATH}`;
   const API_BASE = `${API_URL}${SAP_HIS_BASE_PATH}`;
+  const queryClient = useQueryClient();
 
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const {
+    data = [],
+    isFetching: loading,
+    error: listError,
+    refetch: refetchLatestData,
+  } = useQuery({
+    queryKey: [SAP_HIS_LATEST_QUERY_KEY, LATEST_API_URL],
+    queryFn: async () => {
+      try {
+        return await fetchLatestSapHis(LATEST_API_URL);
+      } catch (err) {
+        console.error('이력 데이터 로드 오류:', err);
+        throw err;
+      }
+    },
+  });
+
+  const error = listError
+    ? getQueryErrorMessage(
+        listError,
+        '데이터를 불러오는 중 오류가 발생했습니다.',
+      )
+    : null;
+
   const [expandedPrimeKey, setExpandedPrimeKey] = useState(null);
-  const [historyByPrimeKey, setHistoryByPrimeKey] = useState({});
   const [columnWidths, setColumnWidths] = useState([]);
   const tableRef = useRef(null);
 
-  const fetchLatestData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axios.get(LATEST_API_URL);
-      const raw = response.data;
-      const list = Array.isArray(raw)
-        ? raw
-        : (raw?.data ??
-          raw?.results ??
-          raw?.sap_his_data ??
-          [raw].filter(Boolean));
-      setData(Array.isArray(list) ? list : []);
-    } catch (err) {
-      console.error('이력 데이터 로드 오류:', err);
-      setError(
-        err.response?.data?.message ??
-          err.message ??
-          '데이터를 불러오는 중 오류가 발생했습니다.',
-      );
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [LATEST_API_URL]);
-
-  useEffect(() => {
-    fetchLatestData();
-  }, [fetchLatestData]);
-
-  const fetchHistory = useCallback(
-    (primeKey) => {
-      const key = String(primeKey);
-      setHistoryByPrimeKey((prev) => ({
-        ...prev,
-        [key]: { ...prev[key], loading: true, error: null },
-      }));
-      axios
-        .get(`${API_BASE}/by-primekey`, {
-          params: { 'prime-key': primeKey },
-        })
-        .then((res) => {
-          const raw = res.data;
-          const list = Array.isArray(raw)
-            ? raw
-            : (raw?.data ??
-              raw?.results ??
-              raw?.sap_his_data ??
-              [raw].filter(Boolean));
-          setHistoryByPrimeKey((prev) => ({
-            ...prev,
-            [key]: {
-              rows: Array.isArray(list) ? list : [],
-              loading: false,
-              error: null,
-            },
-          }));
-        })
-        .catch((err) => {
-          console.error('PrimeKey 이력 조회 오류:', err);
-          setHistoryByPrimeKey((prev) => ({
-            ...prev,
-            [key]: {
-              rows: [],
-              loading: false,
-              error:
-                err.response?.data?.message ??
-                err.message ??
-                '해당 PrimeKey의 이력을 불러오지 못했습니다.',
-            },
-          }));
-        });
-    },
-    [API_BASE],
-  );
-
-  const toggleExpand = useCallback(
-    (primeKey) => {
-      const key = String(primeKey);
-      setExpandedPrimeKey((prev) => (prev === key ? null : key));
-      if (!historyByPrimeKey[key]) {
-        fetchHistory(primeKey);
+  // prime key 에 해당하는 sap his data 를 가져오는 tan stack react query 함수
+  const {
+    data: expandedHistoryRows,
+    isFetching: expandedHistoryLoading,
+    error: expandedHistoryError,
+  } = useQuery({
+    queryKey: [SAP_HIS_BY_PRIMEKEY_QUERY_KEY, API_BASE, expandedPrimeKey],
+    queryFn: async () => {
+      try {
+        return await fetchSapHisByPrimeKey(API_BASE, expandedPrimeKey);
+      } catch (err) {
+        console.error('PrimeKey 이력 조회 오류:', err);
+        throw err;
       }
     },
-    [historyByPrimeKey, fetchHistory],
+    enabled: !!expandedPrimeKey,
+  });
+
+  const getHistoryState = useCallback(
+    (keyStr) => {
+      if (expandedPrimeKey === keyStr) {
+        return {
+          rows: expandedHistoryRows ?? [],
+          loading: expandedHistoryLoading,
+          error: expandedHistoryError
+            ? getQueryErrorMessage(
+                expandedHistoryError,
+                '해당 PrimeKey의 이력을 불러오지 못했습니다.',
+              )
+            : null,
+        };
+      }
+
+      const cached = queryClient.getQueryData([
+        SAP_HIS_BY_PRIMEKEY_QUERY_KEY,
+        API_BASE,
+        keyStr,
+      ]);
+      if (cached) {
+        return { rows: cached, loading: false, error: null };
+      }
+
+      return undefined;
+    },
+    [
+      API_BASE,
+      expandedHistoryError,
+      expandedHistoryLoading,
+      expandedHistoryRows,
+      expandedPrimeKey,
+      queryClient,
+    ],
   );
 
-  const handleMainReasonSaved = useCallback((rowIndex, value) => {
-    setData((prev) =>
-      prev.map((row, i) =>
-        i === rowIndex ? patchRowChangeReason(row, value) : row,
-      ),
-    );
+  const toggleExpand = useCallback((primeKey) => {
+    const key = String(primeKey);
+    setExpandedPrimeKey((prev) => (prev === key ? null : key));
   }, []);
+
+  const handleMainReasonSaved = useCallback(
+    (rowIndex, value) => {
+      queryClient.setQueryData(
+        [SAP_HIS_LATEST_QUERY_KEY, LATEST_API_URL],
+        (prev) => {
+          if (!Array.isArray(prev)) return prev;
+          return prev.map((row, i) =>
+            i === rowIndex ? patchRowChangeReason(row, value) : row,
+          );
+        },
+      );
+    },
+    [queryClient, LATEST_API_URL],
+  );
 
   const handleHistoryReasonSaved = useCallback(
     (primeKeyStr, historyIndex, value) => {
-      setHistoryByPrimeKey((prev) => {
-        const entry = prev[primeKeyStr];
-        if (!entry?.rows) return prev;
-        return {
-          ...prev,
-          [primeKeyStr]: {
-            ...entry,
-            rows: entry.rows.map((row, i) =>
-              i === historyIndex ? patchRowChangeReason(row, value) : row,
-            ),
-          },
-        };
-      });
+      queryClient.setQueryData(
+        [SAP_HIS_BY_PRIMEKEY_QUERY_KEY, API_BASE, primeKeyStr],
+        (prev) => {
+          if (!Array.isArray(prev)) return prev;
+          return prev.map((row, i) =>
+            i === historyIndex ? patchRowChangeReason(row, value) : row,
+          );
+        },
+      );
     },
-    [],
+    [queryClient, API_BASE],
   );
 
   const allHeaders =
@@ -205,7 +231,7 @@ function HistoryPage() {
             <button
               type='button'
               className='history-refresh-btn'
-              onClick={fetchLatestData}
+              onClick={() => void refetchLatestData()}
               disabled={loading}
             >
               {loading ? '로딩 중...' : '새로고침'}
@@ -245,7 +271,7 @@ function HistoryPage() {
                       row[PRIMEKEY_COLUMN] ?? row['prime_key'] ?? rowIndex;
                     const keyStr = String(primeKey);
                     const isExpanded = expandedPrimeKey === keyStr;
-                    const history = historyByPrimeKey[keyStr];
+                    const history = getHistoryState(keyStr);
 
                     return (
                       <Fragment key={`row-${rowIndex}`}>
