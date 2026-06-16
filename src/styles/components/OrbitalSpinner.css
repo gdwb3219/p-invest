@@ -1,309 +1,118 @@
-/* ─────────────────────────────────────────────
+/* ─────────────────────────────────────────────────
    OrbitalSpinner.css
-   Two elliptical orbits crossing at perpendicular
-   axes with a pulsing core — no frameworks needed.
-───────────────────────────────────────────────── */
+   Dots travel true elliptical paths via animateMotion.
+   No cx/cy @keyframes — those cause diamond artifacts.
+───────────────────────────────────────────────────── */
 
 :root {
-  --spinner-color: #6366f1; /* indigo-500 — override via prop or root */
+  --spinner-color: #6366f1;
 }
 
-/* ── Container ──────────────────────────────── */
+/* ── Container ──────────────────────────────────── */
 .orbital-spinner {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
   --spinner-color: #6366f1;
 }
 
-/* Size variants */
 .orbital-spinner--sm {
-  gap: 6px;
+  gap: 5px;
 }
 .orbital-spinner--md {
-  gap: 10px;
+  gap: 9px;
 }
 .orbital-spinner--lg {
-  gap: 14px;
+  gap: 13px;
 }
 
-/* ── SVG canvas ─────────────────────────────── */
-.orbital-spinner__svg {
-  overflow: visible;
-}
-
-/* ── Orbit tracks ───────────────────────────── */
+/* ── Orbit tracks ───────────────────────────────── */
 .orbital-spinner__track {
   stroke: var(--spinner-color);
   stroke-width: 1px;
   fill: none;
-  opacity: 0.18;
+  opacity: 0.2;
 }
 
+/* The inner track gets a subtle stroke-dash to distinguish it */
 .orbital-spinner__track--inner {
-  /* tilt the inner ellipse ~60° around X axis */
-  transform-box: fill-box;
-  transform-origin: center;
-  transform: rotateX(60deg);
+  opacity: 0.13;
+  stroke-dasharray: 3 3;
 }
 
-/* ── Dots that travel the orbits ────────────── */
+/* ── Orbiting dots ──────────────────────────────── */
 .orbital-spinner__dot {
   fill: var(--spinner-color);
-  filter: drop-shadow(0 0 3px var(--spinner-color));
-  transform-box: fill-box;
-  transform-origin: center;
+  filter: drop-shadow(0 0 2.5px var(--spinner-color));
 }
 
-/*
- * Outer dot: travels a wide ellipse.
- * We animate cx/cy via a custom @keyframes that
- * traces the parametric ellipse equation so the
- * dot actually follows the visible track.
- *
- * cx(t) = Cx + Rx·cos(t)
- * cy(t) = Cy + Ry·sin(t)
- *
- * Values are baked per size variant below.
- */
-
-/* --- md (56 px, Cx=28, Rx=25.2, Ry=20.16) --- */
-.orbital-spinner--md .orbital-spinner__dot--outer {
-  animation: orbit-outer-md 1.6s linear infinite;
-}
-.orbital-spinner--md .orbital-spinner__dot--inner {
-  animation: orbit-inner-md 1.1s linear infinite reverse;
+.orbital-spinner__dot--inner {
+  opacity: 0.75;
 }
 
-/* --- sm (32 px, Cx=16, Rx=14.4, Ry=11.52) --- */
-.orbital-spinner--sm .orbital-spinner__dot--outer {
-  animation: orbit-outer-sm 1.6s linear infinite;
-}
-.orbital-spinner--sm .orbital-spinner__dot--inner {
-  animation: orbit-inner-sm 1.1s linear infinite reverse;
-}
-
-/* --- lg (88 px, Cx=44, Rx=39.6, Ry=31.68) --- */
-.orbital-spinner--lg .orbital-spinner__dot--outer {
-  animation: orbit-outer-lg 1.6s linear infinite;
-}
-.orbital-spinner--lg .orbital-spinner__dot--inner {
-  animation: orbit-inner-lg 1.1s linear infinite reverse;
-}
-
-/* ── Outer orbit keyframes ──────────────────── */
-/* md  — Cx=28, Rx=25.2, Ry=20.16 */
-@keyframes orbit-outer-md {
-  0% {
-    cx: 53.2;
-    cy: 28;
-  }
-  25% {
-    cx: 28;
-    cy: 48.16;
-  }
-  50% {
-    cx: 2.8;
-    cy: 28;
-  }
-  75% {
-    cx: 28;
-    cy: 7.84;
-  }
-  100% {
-    cx: 53.2;
-    cy: 28;
-  }
-}
-
-/* sm  — Cx=16, Rx=14.4, Ry=11.52 */
-@keyframes orbit-outer-sm {
-  0% {
-    cx: 30.4;
-    cy: 16;
-  }
-  25% {
-    cx: 16;
-    cy: 27.52;
-  }
-  50% {
-    cx: 1.6;
-    cy: 16;
-  }
-  75% {
-    cx: 16;
-    cy: 4.48;
-  }
-  100% {
-    cx: 30.4;
-    cy: 16;
-  }
-}
-
-/* lg  — Cx=44, Rx=39.6, Ry=31.68 */
-@keyframes orbit-outer-lg {
-  0% {
-    cx: 83.6;
-    cy: 44;
-  }
-  25% {
-    cx: 44;
-    cy: 75.68;
-  }
-  50% {
-    cx: 4.4;
-    cy: 44;
-  }
-  75% {
-    cx: 44;
-    cy: 12.32;
-  }
-  100% {
-    cx: 83.6;
-    cy: 44;
-  }
-}
-
-/* ── Inner orbit keyframes ──────────────────── */
-/*
- * The inner ellipse is visually tilted (rotateX 60°)
- * so its apparent ry ≈ ry2 * cos(60°) = ry2 * 0.5
- * md: Ry_apparent ≈ 7.84
- */
-/* md */
-@keyframes orbit-inner-md {
-  0% {
-    cx: 53.2;
-    cy: 28;
-  }
-  25% {
-    cx: 28;
-    cy: 35.84;
-  }
-  50% {
-    cx: 2.8;
-    cy: 28;
-  }
-  75% {
-    cx: 28;
-    cy: 20.16;
-  }
-  100% {
-    cx: 53.2;
-    cy: 28;
-  }
-}
-
-/* sm */
-@keyframes orbit-inner-sm {
-  0% {
-    cx: 30.4;
-    cy: 16;
-  }
-  25% {
-    cx: 16;
-    cy: 20.48;
-  }
-  50% {
-    cx: 1.6;
-    cy: 16;
-  }
-  75% {
-    cx: 16;
-    cy: 11.52;
-  }
-  100% {
-    cx: 30.4;
-    cy: 16;
-  }
-}
-
-/* lg */
-@keyframes orbit-inner-lg {
-  0% {
-    cx: 83.6;
-    cy: 44;
-  }
-  25% {
-    cx: 44;
-    cy: 56.24;
-  }
-  50% {
-    cx: 4.4;
-    cy: 44;
-  }
-  75% {
-    cx: 44;
-    cy: 31.76;
-  }
-  100% {
-    cx: 83.6;
-    cy: 44;
-  }
-}
-
-/* ── Core pulse ─────────────────────────────── */
+/* ── Core pulse ─────────────────────────────────── */
 .orbital-spinner__core {
   fill: var(--spinner-color);
-  animation: core-pulse 1.6s ease-in-out infinite;
+  animation: os-core-pulse 1.8s ease-in-out infinite;
 }
 
-@keyframes core-pulse {
+@keyframes os-core-pulse {
   0%,
   100% {
     opacity: 0.9;
-    filter: drop-shadow(0 0 4px var(--spinner-color))
-      drop-shadow(0 0 10px var(--spinner-color));
-    r: inherit; /* stays at base value */
+    r: inherit;
   }
   50% {
-    opacity: 0.5;
-    filter: drop-shadow(0 0 2px var(--spinner-color));
+    opacity: 0.4;
   }
 }
 
-/* ── Label ──────────────────────────────────── */
+/* ── Label ──────────────────────────────────────── */
 .orbital-spinner__label {
   font-family: 'Inter', 'Pretendard', system-ui, sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 500;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.065em;
   text-transform: uppercase;
   color: var(--spinner-color);
-  opacity: 0.7;
-  animation: label-fade 1.6s ease-in-out infinite;
+  opacity: 0.65;
+  animation: os-label-fade 1.8s ease-in-out infinite;
   white-space: nowrap;
 }
 
 .orbital-spinner--sm .orbital-spinner__label {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
 }
 .orbital-spinner--lg .orbital-spinner__label {
-  font-size: 0.875rem;
+  font-size: 0.82rem;
 }
 
-@keyframes label-fade {
+@keyframes os-label-fade {
   0%,
   100% {
-    opacity: 0.7;
+    opacity: 0.65;
   }
   50% {
-    opacity: 0.35;
+    opacity: 0.28;
   }
 }
 
-/* ── Reduced-motion override ────────────────── */
+/* ── Reduced-motion ─────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .orbital-spinner__dot,
   .orbital-spinner__core,
   .orbital-spinner__label {
     animation: none;
   }
+
+  /* animateMotion is a SVG-level animation — pause via CSS */
+  .orbital-spinner__svg {
+    animation-play-state: paused;
+  }
+  /* Dots freeze in place; tracks remain visible as context */
   .orbital-spinner__track {
     opacity: 0.35;
   }
   .orbital-spinner__core {
-    opacity: 0.8;
+    opacity: 0.85;
   }
 }

@@ -401,7 +401,7 @@ function HistoryPage() {
           )}
         </div>
         {expandedHistoryLoading && <LoadingSpinner />}
-        {expandedHistoryLoading && <OrbitalSpinner />}
+        {expandedHistoryLoading && <OrbitalSpinner size='lg' />}
         {expandedHistoryLoading && <FancySpinner />}
       </div>
     </div>
