@@ -13,6 +13,91 @@ const getOrderedHeaders = (headers) => {
   return [...first, ...rest];
 };
 
+const createDummyRow = (headers) => {
+  const row = {};
+  headers.forEach((h) => {
+    row[h] = '';
+  });
+  return row;
+};
+
+const findKeyFrom = (data, key, start, getKey) => {
+  for (let i = start; i < data.length; i += 1) {
+    if (getKey(data[i]) === key) return i;
+  }
+  return -1;
+};
+
+/** prime-key 기준으로 좌/우 테이블 행 수를 맞추고, 없는 쪽에 더미 행 삽입 */
+const alignTablesByPrimeKey = (data1, data2, getKey, headers) => {
+  const left = [];
+  const right = [];
+  let i = 0;
+  let j = 0;
+
+  while (i < data1.length || j < data2.length) {
+    if (i >= data1.length) {
+      const row2 = data2[j];
+      const key = getKey(row2);
+      left.push({ row: createDummyRow(headers), isDummy: true, uniqueKey: key });
+      right.push({ row: row2, isDummy: false, uniqueKey: key });
+      j += 1;
+      continue;
+    }
+    if (j >= data2.length) {
+      const row1 = data1[i];
+      const key = getKey(row1);
+      left.push({ row: row1, isDummy: false, uniqueKey: key });
+      right.push({ row: createDummyRow(headers), isDummy: true, uniqueKey: key });
+      i += 1;
+      continue;
+    }
+
+    const row1 = data1[i];
+    const row2 = data2[j];
+    const key1 = getKey(row1);
+    const key2 = getKey(row2);
+
+    if (key1 === key2) {
+      left.push({ row: row1, isDummy: false, uniqueKey: key1 });
+      right.push({ row: row2, isDummy: false, uniqueKey: key2 });
+      i += 1;
+      j += 1;
+      continue;
+    }
+
+    const key1In2 = findKeyFrom(data2, key1, j, getKey);
+    const key2In1 = findKeyFrom(data1, key2, i, getKey);
+
+    if (key1In2 === -1) {
+      left.push({ row: row1, isDummy: false, uniqueKey: key1 });
+      right.push({ row: createDummyRow(headers), isDummy: true, uniqueKey: key1 });
+      i += 1;
+      continue;
+    }
+    if (key2In1 === -1) {
+      left.push({ row: createDummyRow(headers), isDummy: true, uniqueKey: key2 });
+      right.push({ row: row2, isDummy: false, uniqueKey: key2 });
+      j += 1;
+      continue;
+    }
+
+    const distToMatch1 = key1In2 - j;
+    const distToMatch2 = key2In1 - i;
+    if (distToMatch2 <= distToMatch1) {
+      left.push({ row: createDummyRow(headers), isDummy: true, uniqueKey: key2 });
+      right.push({ row: row2, isDummy: false, uniqueKey: key2 });
+      j += 1;
+    } else {
+      left.push({ row: row1, isDummy: false, uniqueKey: key1 });
+      right.push({ row: createDummyRow(headers), isDummy: true, uniqueKey: key1 });
+      i += 1;
+    }
+  }
+
+  return { left, right };
+};
+
 // 탭별 초기 데이터
 const getInitialTabData = () => ({
   data1: [],
@@ -210,6 +295,25 @@ function TestPage() {
     };
   }, [data1, data2]);
 
+  const alignedTables = useMemo(() => {
+    if (
+      !data1?.length ||
+      !data2?.length ||
+      !data1[0] ||
+      !data2[0]
+    ) {
+      return { left: [], right: [] };
+    }
+    const allHeadersRaw = [
+      ...new Set([...Object.keys(data1[0]), ...Object.keys(data2[0])]),
+    ];
+    const headers = getOrderedHeaders(allHeadersRaw);
+    return alignTablesByPrimeKey(data1, data2, getUniqueKey, headers);
+  }, [data1, data2]);
+
+  const alignedLeft = alignedTables.left;
+  const alignedRight = alignedTables.right;
+
   // revision 목록 가져오기
   const fetchRevisions = useCallback(async () => {
     setLoadingRevisions(true);
@@ -325,7 +429,7 @@ function TestPage() {
       table1.removeEventListener('scroll', handleScroll1);
       table2.removeEventListener('scroll', handleScroll2);
     };
-  }, [data1, data2]);
+  }, [alignedLeft.length, alignedRight.length]);
 
   const fetchData = async () => {
     if (!selectedRevision1 || !selectedRevision2) {
@@ -471,21 +575,21 @@ function TestPage() {
 
   const getRowPrimeKey = useCallback(
     (tableId, rowIndex) => {
-      const row = tableId === 1 ? data1[rowIndex] : data2[rowIndex];
-      return getUniqueKey(row);
+      const entry = tableId === 1 ? alignedLeft[rowIndex] : alignedRight[rowIndex];
+      return entry?.uniqueKey ?? '';
     },
-    [data1, data2],
+    [alignedLeft, alignedRight],
   );
 
   const applyRowRangeSelection = useCallback(
     (tableId, startIndex, endIndex, additive = false) => {
-      const data = tableId === 1 ? data1 : data2;
-      if (!data.length) return;
+      const rows = tableId === 1 ? alignedLeft : alignedRight;
+      if (!rows.length) return;
       const min = Math.min(startIndex, endIndex);
       const max = Math.max(startIndex, endIndex);
       const rangeKeys = new Set();
       for (let i = min; i <= max; i += 1) {
-        const key = getUniqueKey(data[i]);
+        const key = rows[i]?.uniqueKey;
         if (key) rangeKeys.add(key);
       }
       if (!additive) {
@@ -496,7 +600,7 @@ function TestPage() {
         new Set([...dragBaseSelectionRef.current, ...rangeKeys]),
       );
     },
-    [data1, data2],
+    [alignedLeft, alignedRight],
   );
 
   const handleRowMouseDown = useCallback(
@@ -504,9 +608,9 @@ function TestPage() {
       if (e.button !== 0) return;
       e.preventDefault();
 
-      const data = tableId === 1 ? data1 : data2;
-      const row = data[rowIndex];
-      if (!row) return;
+      const rows = tableId === 1 ? alignedLeft : alignedRight;
+      const entry = rows[rowIndex];
+      if (!entry) return;
 
       const ctrl = e.ctrlKey || e.metaKey;
       const shift = e.shiftKey;
@@ -532,7 +636,7 @@ function TestPage() {
 
       if (ctrl) {
         dragBaseSelectionRef.current = new Set(selectedPrimeKeysRef.current);
-        ctrlClickPendingKeyRef.current = getUniqueKey(row);
+        ctrlClickPendingKeyRef.current = entry.uniqueKey;
         return;
       }
 
@@ -540,7 +644,7 @@ function TestPage() {
       dragBaseSelectionRef.current = new Set();
       applyRowRangeSelection(tableId, rowIndex, rowIndex, false);
     },
-    [data1, data2, applyRowRangeSelection],
+    [alignedLeft, alignedRight, applyRowRangeSelection],
   );
 
   const handleRowMouseEnter = useCallback(
@@ -570,13 +674,16 @@ function TestPage() {
 
   const getSourceTableRowClassName = useCallback(
     (tableId, rowIndex) => {
-      const row = tableId === 1 ? data1[rowIndex] : data2[rowIndex];
-      if (!row) return undefined;
-      const uniqueKey = getUniqueKey(row);
+      const entry =
+        tableId === 1 ? alignedLeft[rowIndex] : alignedRight[rowIndex];
+      if (!entry) return undefined;
+      const { isDummy, uniqueKey } = entry;
       const type = rowTypeMap[uniqueKey];
       const classes = [];
 
-      if (type === '수정') {
+      if (isDummy) {
+        classes.push('row-dummy');
+      } else if (type === '수정') {
         classes.push('row-type-수정');
       } else if (tableId === 1 && type === '삭제') {
         classes.push('row-type-삭제');
@@ -590,7 +697,7 @@ function TestPage() {
 
       return classes.length > 0 ? classes.join(' ') : undefined;
     },
-    [data1, data2, rowTypeMap, isSourceRowSelected],
+    [alignedLeft, alignedRight, rowTypeMap, isSourceRowSelected],
   );
 
   const endRowDrag = useCallback(() => {
@@ -749,7 +856,8 @@ function TestPage() {
             {!loading && !error && (
               <div className='tables-container' ref={tablesContainerRef}>
                 <p className='table-selection-hint'>
-                  행 클릭·드래그로 prime-key 필터.{' '}
+                  prime-key 기준으로 좌·우 행이 맞춰지며, 삭제·신규 항목은 반대편에
+                  빈 더미 행이 표시됩니다. 행 클릭·드래그로 비교 결과 필터.{' '}
                   <strong>Shift</strong>+클릭 구간 선택,{' '}
                   <strong>Ctrl</strong>+클릭 토글·드래그로 추가 선택. 비교
                   테이블 1·2 밖(비교 결과 영역 제외) 클릭 시 필터 해제.
@@ -773,9 +881,9 @@ function TestPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {data1.map((row, rowIndex) => (
+                          {alignedLeft.map((entry, rowIndex) => (
                             <tr
-                              key={`t1-${rowIndex}`}
+                              key={`t1-${entry.uniqueKey}-${rowIndex}`}
                               className={getSourceTableRowClassName(1, rowIndex)}
                               title='Shift+클릭 구간 · Ctrl+클릭 토글/추가'
                               onMouseDown={(e) =>
@@ -790,7 +898,9 @@ function TestPage() {
                               </td>
                               {getOrderedHeaders(headers1).map(
                                 (header, colIndex) => (
-                                  <td key={colIndex}>{row[header]}</td>
+                                  <td key={colIndex}>
+                                    {entry.isDummy ? '' : entry.row[header]}
+                                  </td>
                                 ),
                               )}
                             </tr>
@@ -822,9 +932,9 @@ function TestPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {data2.map((row, rowIndex) => (
+                          {alignedRight.map((entry, rowIndex) => (
                             <tr
-                              key={`t2-${rowIndex}`}
+                              key={`t2-${entry.uniqueKey}-${rowIndex}`}
                               className={getSourceTableRowClassName(2, rowIndex)}
                               title='Shift+클릭 구간 · Ctrl+클릭 토글/추가'
                               onMouseDown={(e) =>
@@ -839,7 +949,9 @@ function TestPage() {
                               </td>
                               {getOrderedHeaders(headers2).map(
                                 (header, colIndex) => (
-                                  <td key={colIndex}>{row[header]}</td>
+                                  <td key={colIndex}>
+                                    {entry.isDummy ? '' : entry.row[header]}
+                                  </td>
                                 ),
                               )}
                             </tr>

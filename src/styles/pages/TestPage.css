@@ -364,22 +364,26 @@ body.test-page-scroll-snap {
   background-color: rgba(111, 140, 255, 0.32) !important;
 }
 
-/* 수정: 양쪽 테이블 — # 노란색, 내용 연한 파란색 */
+/* 수정: 양쪽 테이블 — 노란색(amber) 계열 */
+.data-table tbody tr.row-type-수정 td {
+  background-color: rgba(245, 158, 11, 0.14);
+}
+
 .data-table tbody tr.row-type-수정 td.row-num-column {
-  background-color: rgba(245, 158, 11, 0.28) !important;
-  color: #92400e;
+  background-color: rgba(245, 158, 11, 0.22);
+  color: #b45309;
 }
 
-.data-table tbody tr.row-type-수정 td:not(.row-num-column) {
-  background-color: rgba(142, 164, 255, 0.12);
+.data-table tbody tr.row-type-수정:hover td {
+  background-color: rgba(245, 158, 11, 0.2);
 }
 
-.data-table tbody tr.row-type-수정:hover td:not(.row-num-column) {
-  background-color: rgba(142, 164, 255, 0.18);
+.data-table tbody tr.row-type-수정:hover td.row-num-column {
+  background-color: rgba(245, 158, 11, 0.28);
 }
 
 .data-table tbody tr.row-type-수정.row-selected td.row-num-column {
-  background-color: rgba(245, 158, 11, 0.38) !important;
+  background-color: rgba(245, 158, 11, 0.3) !important;
   box-shadow: inset 3px 0 0 rgba(90, 111, 214, 0.85);
 }
 
@@ -427,6 +431,25 @@ body.test-page-scroll-snap {
 .data-table tbody tr.row-type-삭제.row-selected td.row-num-column {
   background-color: rgba(239, 68, 68, 0.3) !important;
   box-shadow: inset 3px 0 0 rgba(90, 111, 214, 0.85);
+}
+
+/* prime-key 정렬용 더미 행 */
+.data-table tbody tr.row-dummy td {
+  background-color: #f8f9fb;
+  color: #c4c9d4;
+}
+
+.data-table tbody tr.row-dummy td.row-num-column {
+  background-color: #f0f2f5;
+  color: #9ca3af;
+}
+
+.data-table tbody tr.row-dummy:hover td {
+  background-color: #f3f4f6;
+}
+
+.data-table tbody tr.row-dummy.row-selected td:not(.row-num-column) {
+  background-color: rgba(111, 140, 255, 0.32) !important;
 }
 
 /* 변경사항 요약 섹션 */
