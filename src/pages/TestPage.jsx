@@ -238,7 +238,7 @@ function TestPage() {
           };
         });
       } else if (row1 && !row2) {
-        // 삭제: data1에 있고 data2에 없음
+        // 삭제: data1에 있고 data2에 -
         type = '삭제';
         rowData = { ...row1 };
         // 모든 컬럼을 삭제된 것으로 표시
@@ -870,7 +870,7 @@ function TestPage() {
                   테이블 1·2 밖(비교 결과 영역 제외) 클릭 시 필터 해제.
                 </p>
                 <div className='table-section'>
-                  <h2>기준 투자 리스트</h2>
+                  <h2>기준 투자 리스트 - {data1.length}건</h2>
                   {data1.length > 0 ? (
                     <div
                       className='table-wrapper invest-list-table-wrapper'
@@ -922,7 +922,7 @@ function TestPage() {
                 </div>
 
                 <div className='table-section'>
-                  <h2>신규 투자 리스트</h2>
+                  <h2>신규 투자 리스트 - {data2.length}건</h2>
                   {data2.length > 0 ? (
                     <div
                       className='table-wrapper invest-list-table-wrapper'
@@ -1025,14 +1025,14 @@ function TestPage() {
                                     {hasChange ? (
                                       <span className='cell-change-value'>
                                         <span className='old-value'>
-                                          {diff.oldValue || '(비어있음)'}
+                                          {diff.oldValue || '(None)'}
                                         </span>
                                         <span className='change-arrow'>
                                           {' '}
                                           →{' '}
                                         </span>
                                         <span className='new-value'>
-                                          {diff.newValue || '(비어있음)'}
+                                          {diff.newValue || '(None)'}
                                         </span>
                                       </span>
                                     ) : (

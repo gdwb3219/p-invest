@@ -326,7 +326,10 @@ function HistoryPage() {
                                   <>
                                     {history?.loading && (
                                       <div className='history-accordion-message history-accordion-message--loading'>
-                                        이력 불러오는 중...
+                                        <OrbitalSpinner
+                                          size='md'
+                                          label='LOADING...'
+                                        />
                                       </div>
                                     )}
                                     {history?.error && !history?.loading && (
@@ -400,9 +403,6 @@ function HistoryPage() {
             <div className='history-empty'>표시할 데이터가 없습니다.</div>
           )}
         </div>
-        {expandedHistoryLoading && <LoadingSpinner />}
-        {expandedHistoryLoading && <OrbitalSpinner size='lg' />}
-        {expandedHistoryLoading && <FancySpinner />}
       </div>
     </div>
   );

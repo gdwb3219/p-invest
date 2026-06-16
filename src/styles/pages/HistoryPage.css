@@ -258,7 +258,14 @@
 .history-accordion-message--loading,
 .history-accordion-message--empty {
   font-style: italic;
-  text-align: center;
+  /* 테이블이 max-content라 가로 스크롤 폭이 넓어집니다.
+     이때 center 정렬이면 스피너가 "테이블 전체 폭의 중앙"에 위치해
+     기본(맨 왼쪽) 상태에서는 화면 밖으로 나갈 수 있어, 왼쪽에 고정합니다. */
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
   color: #6b7280;
 }
 
