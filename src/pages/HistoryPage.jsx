@@ -16,6 +16,9 @@ import {
   splitHeaders,
 } from './HistoryPage/historyReasonUtils';
 import '../styles/pages/HistoryPage.css';
+import LoadingSpinner from '../components/LoadingSpinner';
+import OrbitalSpinner from '../components/OrbitalSpinner';
+import FancySpinner from '../components/FancySpinner';
 
 const SAP_HIS_TEST_PATH = '/sap-his-data/test';
 const SAP_HIS_BASE_PATH = '/sap-his-data';
@@ -40,13 +43,13 @@ const normalizeSapHisList = (raw) => {
   return Array.isArray(list) ? list : [];
 };
 
-// latest sap his data 를 가져오는 함수
+// latest sap his data 를 가져오는 함수 QueryFn 사용
 const fetchLatestSapHis = async (url) => {
   const response = await axios.get(url);
   return normalizeSapHisList(response.data);
 };
 
-// prime key 에 해당하는 sap his data 를 가져오는 함수
+// prime key 에 해당하는 sap his data 를 가져오는 함수 QueryFn
 const fetchSapHisByPrimeKey = async (apiBase, primeKey) => {
   const response = await axios.get(`${apiBase}/by-primekey`, {
     params: { 'prime-key': primeKey },
@@ -64,13 +67,17 @@ const patchRowChangeReason = (row, value) => ({
   [CHANGE_REASON_COLUMN]: value,
 });
 
+// Main Page Component
 // 히스토리 페이지 컴포넌트
 function HistoryPage() {
   const { API_URL } = useApiUrl();
   const LATEST_API_URL = `${API_URL}${SAP_HIS_TEST_PATH}`;
   const API_BASE = `${API_URL}${SAP_HIS_BASE_PATH}`;
+
+  // mutate 시 활용하는 queryClient
   const queryClient = useQueryClient();
 
+  // 기본적인 useQuery 사용
   const {
     data = [],
     isFetching: loading,
@@ -225,7 +232,6 @@ function HistoryPage() {
       <div className='history-page'>
         <h1>이력 페이지</h1>
         <p>행을 클릭하면 해당 PrimeKey의 변경 이력이 바로 아래에 펼쳐집니다.</p>
-
         <div className='history-content'>
           <div className='history-toolbar'>
             <button
@@ -394,6 +400,9 @@ function HistoryPage() {
             <div className='history-empty'>표시할 데이터가 없습니다.</div>
           )}
         </div>
+        {expandedHistoryLoading && <LoadingSpinner />}
+        {expandedHistoryLoading && <OrbitalSpinner />}
+        {expandedHistoryLoading && <FancySpinner />}
       </div>
     </div>
   );

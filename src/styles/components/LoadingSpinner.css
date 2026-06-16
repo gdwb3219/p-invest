@@ -1,0 +1,81 @@
+/* LoadingSpinner — 단일 링, 미니멀 스타일 */
+
+.loading-spinner {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.loading-spinner__ring {
+  display: block;
+  border-radius: 50%;
+  border-style: solid;
+  border-color: #e8eaef;
+  border-top-color: #6f8cff;
+  animation: loading-spinner-spin 0.7s linear infinite;
+}
+
+.loading-spinner--sm .loading-spinner__ring {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-width: 2px;
+}
+
+.loading-spinner--md .loading-spinner__ring {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-width: 2.5px;
+}
+
+.loading-spinner--lg .loading-spinner__ring {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-width: 3px;
+}
+
+.loading-spinner__label {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-align: center;
+}
+
+.loading-spinner--lg .loading-spinner__label {
+  font-size: 0.875rem;
+}
+
+.loading-spinner__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.loading-spinner--overlay-content {
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e8eaef;
+  box-shadow: 0 4px 24px rgba(42, 45, 51, 0.08);
+}
+
+@keyframes loading-spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner__ring {
+    animation-duration: 1.4s;
+  }
+}
