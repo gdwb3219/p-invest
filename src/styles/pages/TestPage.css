@@ -489,13 +489,16 @@ body.test-page-scroll-snap {
   --comparison-row-h: 2.35rem;
   --comparison-fixed-rows: 10;
   height: calc(
-    var(--comparison-head-h) + var(--comparison-row-h) * var(--comparison-fixed-rows)
+    var(--comparison-head-h) + var(--comparison-row-h) *
+      var(--comparison-fixed-rows)
   );
   min-height: calc(
-    var(--comparison-head-h) + var(--comparison-row-h) * var(--comparison-fixed-rows)
+    var(--comparison-head-h) + var(--comparison-row-h) *
+      var(--comparison-fixed-rows)
   );
   max-height: calc(
-    var(--comparison-head-h) + var(--comparison-row-h) * var(--comparison-fixed-rows)
+    var(--comparison-head-h) + var(--comparison-row-h) *
+      var(--comparison-fixed-rows)
   );
 }
 

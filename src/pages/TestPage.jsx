@@ -39,7 +39,11 @@ const alignTablesByPrimeKey = (data1, data2, getKey, headers) => {
     if (i >= data1.length) {
       const row2 = data2[j];
       const key = getKey(row2);
-      left.push({ row: createDummyRow(headers), isDummy: true, uniqueKey: key });
+      left.push({
+        row: createDummyRow(headers),
+        isDummy: true,
+        uniqueKey: key,
+      });
       right.push({ row: row2, isDummy: false, uniqueKey: key });
       j += 1;
       continue;
@@ -48,7 +52,11 @@ const alignTablesByPrimeKey = (data1, data2, getKey, headers) => {
       const row1 = data1[i];
       const key = getKey(row1);
       left.push({ row: row1, isDummy: false, uniqueKey: key });
-      right.push({ row: createDummyRow(headers), isDummy: true, uniqueKey: key });
+      right.push({
+        row: createDummyRow(headers),
+        isDummy: true,
+        uniqueKey: key,
+      });
       i += 1;
       continue;
     }
@@ -71,12 +79,20 @@ const alignTablesByPrimeKey = (data1, data2, getKey, headers) => {
 
     if (key1In2 === -1) {
       left.push({ row: row1, isDummy: false, uniqueKey: key1 });
-      right.push({ row: createDummyRow(headers), isDummy: true, uniqueKey: key1 });
+      right.push({
+        row: createDummyRow(headers),
+        isDummy: true,
+        uniqueKey: key1,
+      });
       i += 1;
       continue;
     }
     if (key2In1 === -1) {
-      left.push({ row: createDummyRow(headers), isDummy: true, uniqueKey: key2 });
+      left.push({
+        row: createDummyRow(headers),
+        isDummy: true,
+        uniqueKey: key2,
+      });
       right.push({ row: row2, isDummy: false, uniqueKey: key2 });
       j += 1;
       continue;
@@ -85,12 +101,20 @@ const alignTablesByPrimeKey = (data1, data2, getKey, headers) => {
     const distToMatch1 = key1In2 - j;
     const distToMatch2 = key2In1 - i;
     if (distToMatch2 <= distToMatch1) {
-      left.push({ row: createDummyRow(headers), isDummy: true, uniqueKey: key2 });
+      left.push({
+        row: createDummyRow(headers),
+        isDummy: true,
+        uniqueKey: key2,
+      });
       right.push({ row: row2, isDummy: false, uniqueKey: key2 });
       j += 1;
     } else {
       left.push({ row: row1, isDummy: false, uniqueKey: key1 });
-      right.push({ row: createDummyRow(headers), isDummy: true, uniqueKey: key1 });
+      right.push({
+        row: createDummyRow(headers),
+        isDummy: true,
+        uniqueKey: key1,
+      });
       i += 1;
     }
   }
@@ -123,7 +147,6 @@ function TestPage() {
   const [revisionListError, setRevisionListError] = useState(null);
   const table1Ref = useRef(null);
   const table2Ref = useRef(null);
-  const tablesContainerRef = useRef(null);
   const isScrollingRef = useRef(false);
   /** prime_key 기준 비교 결과 필터 (비어 있으면 전체 표시) */
   const [selectedPrimeKeys, setSelectedPrimeKeys] = useState(() => new Set());
@@ -296,12 +319,7 @@ function TestPage() {
   }, [data1, data2]);
 
   const alignedTables = useMemo(() => {
-    if (
-      !data1?.length ||
-      !data2?.length ||
-      !data1[0] ||
-      !data2[0]
-    ) {
+    if (!data1?.length || !data2?.length || !data1[0] || !data2[0]) {
       return { left: [], right: [] };
     }
     const allHeadersRaw = [
@@ -318,9 +336,7 @@ function TestPage() {
   const fetchRevisions = useCallback(async () => {
     setLoadingRevisions(true);
     try {
-      const response = await axios.get(
-        REVISIONS_LIST_URL,
-      );
+      const response = await axios.get(REVISIONS_LIST_URL);
       const revisionsData = Array.isArray(response.data)
         ? response.data
         : response.data?.data || response.data?.results || [];
@@ -526,16 +542,6 @@ function TestPage() {
           error: null,
         },
       }));
-      // 테이블 영역이 렌더된 뒤 뷰포트 중앙으로 부드럽게 스크롤
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          tablesContainerRef.current?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'nearest',
-          });
-        }, 120);
-      });
     } catch (err) {
       console.error('데이터 가져오기 오류:', err);
       setTabData((prev) => ({
@@ -575,7 +581,8 @@ function TestPage() {
 
   const getRowPrimeKey = useCallback(
     (tableId, rowIndex) => {
-      const entry = tableId === 1 ? alignedLeft[rowIndex] : alignedRight[rowIndex];
+      const entry =
+        tableId === 1 ? alignedLeft[rowIndex] : alignedRight[rowIndex];
       return entry?.uniqueKey ?? '';
     },
     [alignedLeft, alignedRight],
@@ -854,11 +861,11 @@ function TestPage() {
             )}
 
             {!loading && !error && (
-              <div className='tables-container' ref={tablesContainerRef}>
+              <div className='tables-container'>
                 <p className='table-selection-hint'>
-                  prime-key 기준으로 좌·우 행이 맞춰지며, 삭제·신규 항목은 반대편에
-                  빈 더미 행이 표시됩니다. 행 클릭·드래그로 비교 결과 필터.{' '}
-                  <strong>Shift</strong>+클릭 구간 선택,{' '}
+                  prime-key 기준으로 좌·우 행이 맞춰지며, 삭제·신규 항목은
+                  반대편에 빈 더미 행이 표시됩니다. 행 클릭·드래그로 비교 결과
+                  필터. <strong>Shift</strong>+클릭 구간 선택,{' '}
                   <strong>Ctrl</strong>+클릭 토글·드래그로 추가 선택. 비교
                   테이블 1·2 밖(비교 결과 영역 제외) 클릭 시 필터 해제.
                 </p>
@@ -884,7 +891,10 @@ function TestPage() {
                           {alignedLeft.map((entry, rowIndex) => (
                             <tr
                               key={`t1-${entry.uniqueKey}-${rowIndex}`}
-                              className={getSourceTableRowClassName(1, rowIndex)}
+                              className={getSourceTableRowClassName(
+                                1,
+                                rowIndex,
+                              )}
                               title='Shift+클릭 구간 · Ctrl+클릭 토글/추가'
                               onMouseDown={(e) =>
                                 handleRowMouseDown(e, 1, rowIndex)
@@ -893,9 +903,7 @@ function TestPage() {
                                 handleRowMouseEnter(e, 1, rowIndex)
                               }
                             >
-                              <td className='row-num-column'>
-                                {rowIndex + 1}
-                              </td>
+                              <td className='row-num-column'>{rowIndex + 1}</td>
                               {getOrderedHeaders(headers1).map(
                                 (header, colIndex) => (
                                   <td key={colIndex}>
@@ -935,7 +943,10 @@ function TestPage() {
                           {alignedRight.map((entry, rowIndex) => (
                             <tr
                               key={`t2-${entry.uniqueKey}-${rowIndex}`}
-                              className={getSourceTableRowClassName(2, rowIndex)}
+                              className={getSourceTableRowClassName(
+                                2,
+                                rowIndex,
+                              )}
                               title='Shift+클릭 구간 · Ctrl+클릭 토글/추가'
                               onMouseDown={(e) =>
                                 handleRowMouseDown(e, 2, rowIndex)
@@ -944,9 +955,7 @@ function TestPage() {
                                 handleRowMouseEnter(e, 2, rowIndex)
                               }
                             >
-                              <td className='row-num-column'>
-                                {rowIndex + 1}
-                              </td>
+                              <td className='row-num-column'>{rowIndex + 1}</td>
                               {getOrderedHeaders(headers2).map(
                                 (header, colIndex) => (
                                   <td key={colIndex}>
@@ -1000,13 +1009,8 @@ function TestPage() {
                           const { rowData, rowDiff, type } = item;
 
                           return (
-                            <tr
-                              key={item.uniqueKey}
-                              className={`type-${type}`}
-                            >
-                              <td className='row-num-column'>
-                                {rowIndex + 1}
-                              </td>
+                            <tr key={item.uniqueKey} className={`type-${type}`}>
+                              <td className='row-num-column'>{rowIndex + 1}</td>
                               {changedColumns.map((column, colIndex) => {
                                 const diff = rowDiff[column];
                                 const hasChange = diff && diff.changed;
@@ -1072,8 +1076,8 @@ function TestPage() {
                           >
                             {isFilterActive ? (
                               <>
-                                선택한 항목에 표시할 변경 사항이 없습니다.
-                                (동일 항목이거나 비교 결과에 포함되지 않음)
+                                선택한 항목에 표시할 변경 사항이 없습니다. (동일
+                                항목이거나 비교 결과에 포함되지 않음)
                               </>
                             ) : (
                               <>✓ 모든 데이터가 동일합니다.</>
