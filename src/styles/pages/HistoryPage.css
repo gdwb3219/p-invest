@@ -156,11 +156,11 @@
   box-sizing: border-box;
 }
 
-.history-table tbody tr {
+.history-table tbody tr.history-row-clickable {
   cursor: pointer;
 }
 
-.history-table tbody tr:hover td {
+.history-table tbody tr.history-row-clickable:hover td {
   background-color: #f9fafb;
 }
 
@@ -170,6 +170,238 @@
 
 .history-table tbody tr.history-accordion-row:hover {
   background-color: transparent;
+}
+
+/* 행 클릭 → 드로어 열기 아이콘 */
+.history-th-open,
+.history-td-open {
+  min-width: 3rem;
+}
+
+.history-open-icon {
+  display: inline-block;
+  margin-right: 0.35rem;
+  font-size: 0.85rem;
+  vertical-align: 0.05em;
+  color: #9ca3af;
+  transition:
+    color 0.15s,
+    transform 0.15s;
+}
+
+.history-open-icon--active {
+  color: #5a6fd6;
+  transform: translateX(2px);
+}
+
+/* 사이드 드로어 */
+.history-drawer-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.history-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(42, 45, 51, 0.28);
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 1;
+  transition: opacity 0.24s ease;
+}
+
+.history-drawer-root--closing .history-drawer-backdrop {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.history-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  width: 60vw;
+  height: 100%;
+  background: #ffffff;
+  border-left: 1px solid #e2e4e9;
+  box-shadow: -8px 0 32px rgba(42, 45, 51, 0.12);
+  pointer-events: auto;
+  animation: history-drawer-slide-in 0.24s ease-out forwards;
+}
+
+.history-drawer--closing {
+  animation: history-drawer-slide-out 0.24s ease-in forwards;
+}
+
+@keyframes history-drawer-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes history-drawer-slide-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.history-drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid #e8eaef;
+  background: #fafbfc;
+}
+
+.history-drawer-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2a2d33;
+}
+
+.history-drawer-subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: #5c6370;
+  word-break: break-all;
+}
+
+.history-drawer-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid #e2e4e9;
+  border-radius: 8px;
+  background: #fff;
+  color: #6b7280;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.history-drawer-close:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.history-drawer-body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  background: #eef1ff;
+  overflow: hidden;
+}
+
+.history-drawer-message {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1rem;
+  font-size: 0.875rem;
+  color: #5c6370;
+}
+
+.history-drawer-message--empty {
+  font-style: italic;
+}
+
+.history-drawer-message--error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-radius: 8px;
+}
+
+.history-drawer-table-wrapper {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  max-height: none;
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 10px;
+  border: 1px solid #c9d2f5;
+  background: #fff;
+}
+
+.history-drawer-table {
+  width: max-content;
+  background-color: #eef1ff;
+}
+
+.history-drawer-table thead {
+  background: #dfe6ff;
+}
+
+.history-drawer-table thead th {
+  background: #dfe6ff;
+}
+
+/* 드로어 테이블: # 열 왼쪽 고정 (메인 테이블과 동일) */
+.history-drawer-table .history-accordion-td-num,
+.history-drawer-table thead .history-th-open {
+  position: sticky;
+  left: 0;
+  min-width: 2.5rem;
+  width: 2.5rem;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: 2px 0 4px rgba(42, 45, 51, 0.06);
+  z-index: 4;
+}
+
+.history-drawer-table thead .history-accordion-td-num,
+.history-drawer-table thead .history-th-open {
+  background: #dfe6ff;
+  color: #374151;
+  z-index: 11;
+}
+
+.history-drawer-table tbody .history-accordion-td-num {
+  color: #3b4fa8;
+  background-color: #d8e0f7;
+}
+
+.history-drawer-table tbody tr:hover .history-accordion-td-num {
+  background-color: #e4eaff;
+}
+
+/* 드로어 테이블: 변경사유 열 오른쪽 고정 */
+.history-drawer-table .history-col-reason {
+  background-color: #eef1ff;
+  z-index: 6;
+}
+
+.history-drawer-table thead .history-col-reason {
+  background-color: #dfe6ff;
+  z-index: 12;
+}
+
+.history-drawer-table tbody tr:hover .history-col-reason {
+  background-color: #e4eaff;
 }
 
 .history-table tbody tr.history-row-selected td,
