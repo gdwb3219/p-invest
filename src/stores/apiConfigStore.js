@@ -2,12 +2,7 @@ import { create } from 'zustand';
 
 export const DEFAULT_API_URL = 'http://127.0.0.1:8080/pinvest';
 
-interface ApiConfigState {
-  apiUrl: string;
-  setApiUrl: (apiUrl: string) => void;
-}
-
-export const useApiConfigStore = create<ApiConfigState>((set) => ({
+export const useApiConfigStore = create((set) => ({
   apiUrl: DEFAULT_API_URL,
   setApiUrl: (apiUrl) => set({ apiUrl }),
 }));
