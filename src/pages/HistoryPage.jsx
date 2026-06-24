@@ -4,11 +4,18 @@ import axios from 'axios';
 import { useApiUrl } from '../stores';
 import HistoryVirtualTable from './HistoryPage/components/HistoryVirtualTable';
 import HistoryDetailDrawer from './HistoryPage/components/HistoryDetailDrawer';
+import HistoryRevMetaBar from './HistoryPage/components/HistoryRevMetaBar';
 import { CHANGE_REASON_COLUMN, splitHeaders } from './HistoryPage/historyReasonUtils';
+import {
+  buildRevMeta,
+  normalizeRevisionsList,
+  resolveCurrentRevision,
+} from './HistoryPage/historyRevUtils';
 import '../styles/pages/HistoryPage.css';
 
 const SAP_HIS_TEST_PATH = '/sap-his-data/test';
 const SAP_HIS_BASE_PATH = '/sap-his-data';
+const REVISIONS_LIST_PATH = '/imports/rev-list/';
 
 const KEY_FIRST = ['구분0 (사업명)', '구분0 순번'];
 const getOrderedHeaders = (headers) => {
@@ -29,9 +36,21 @@ const normalizeSapHisList = (raw) => {
   return Array.isArray(list) ? list : [];
 };
 
-const fetchLatestSapHis = async (url) => {
-  const response = await axios.get(url);
-  return normalizeSapHisList(response.data);
+const fetchLatestSapHis = async (latestUrl, revisionsUrl) => {
+  const [latestResponse, revisionsResponse] = await Promise.all([
+    axios.get(latestUrl),
+    axios.get(revisionsUrl).catch((err) => {
+      console.warn('Revision 목록 조회 실패:', err);
+      return { data: [] };
+    }),
+  ]);
+
+  const rows = normalizeSapHisList(latestResponse.data);
+  const revisions = normalizeRevisionsList(revisionsResponse.data);
+  const revision = resolveCurrentRevision(revisions, rows);
+  const revMeta = buildRevMeta(revision, rows);
+
+  return { rows, revision, revMeta };
 };
 
 const fetchSapHisByPrimeKey = async (apiBase, primeKey) => {
@@ -52,27 +71,31 @@ const patchRowChangeReason = (row, value) => ({
 function HistoryPage() {
   const { API_URL } = useApiUrl();
   const LATEST_API_URL = `${API_URL}${SAP_HIS_TEST_PATH}`;
+  const REVISIONS_LIST_URL = `${API_URL}${REVISIONS_LIST_PATH}`;
   const API_BASE = `${API_URL}${SAP_HIS_BASE_PATH}`;
   const queryClient = useQueryClient();
 
   const [selectedPrimeKey, setSelectedPrimeKey] = useState(null);
 
   const {
-    data = [],
+    data: latestData,
     isFetching: loading,
     error: listError,
     refetch: refetchLatestData,
   } = useQuery({
-    queryKey: [SAP_HIS_LATEST_QUERY_KEY, LATEST_API_URL],
+    queryKey: [SAP_HIS_LATEST_QUERY_KEY, LATEST_API_URL, REVISIONS_LIST_URL],
     queryFn: async () => {
       try {
-        return await fetchLatestSapHis(LATEST_API_URL);
+        return await fetchLatestSapHis(LATEST_API_URL, REVISIONS_LIST_URL);
       } catch (err) {
         console.error('이력 데이터 로드 오류:', err);
         throw err;
       }
     },
   });
+
+  const data = latestData?.rows ?? [];
+  const revMeta = latestData?.revMeta ?? null;
 
   const error = listError
     ? getQueryErrorMessage(
@@ -126,10 +149,13 @@ function HistoryPage() {
       queryClient.setQueryData(
         [SAP_HIS_LATEST_QUERY_KEY, LATEST_API_URL],
         (prev) => {
-          if (!Array.isArray(prev)) return prev;
-          return prev.map((row, i) =>
-            i === rowIndex ? patchRowChangeReason(row, value) : row,
-          );
+          if (!prev?.rows) return prev;
+          return {
+            ...prev,
+            rows: prev.rows.map((row, i) =>
+              i === rowIndex ? patchRowChangeReason(row, value) : row,
+            ),
+          };
         },
       );
     },
@@ -175,16 +201,19 @@ function HistoryPage() {
           )}
 
           {!loading && data.length > 0 && (
-            <HistoryVirtualTable
-              data={data}
-              dataHeaders={dataHeaders}
-              hasReasonColumn={hasReasonColumn}
-              apiBase={API_BASE}
-              onReasonSaved={handleMainReasonSaved}
-              selectedPrimeKey={selectedPrimeKey}
-              onRowClick={handleRowClick}
-              showRowOpenIcon
-            />
+            <div className='history-table-panel'>
+              <HistoryRevMetaBar revMeta={revMeta} />
+              <HistoryVirtualTable
+                data={data}
+                dataHeaders={dataHeaders}
+                hasReasonColumn={hasReasonColumn}
+                apiBase={API_BASE}
+                onReasonSaved={handleMainReasonSaved}
+                selectedPrimeKey={selectedPrimeKey}
+                onRowClick={handleRowClick}
+                showRowOpenIcon
+              />
+            </div>
           )}
 
           {!loading && !error && data.length === 0 && (
